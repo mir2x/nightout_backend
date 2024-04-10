@@ -47,7 +47,7 @@ exports.userRegister = catchAsync(async (req, res, next) => {
         mobileNumber,
         
         location,
-        role: role?role:"UNKNOWN",
+        role: role?role:"USER",
         image:"https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?size=626&ext=jpg&ga=GA1.1.1700460183.1708560000&semt=sph"
          
     });
@@ -110,7 +110,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 
     user.emailVerified = true;
     user.emailVerifyCode = null;
-    user.role = "USER";
+    
     await user.save();
     return sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -277,4 +277,25 @@ exports.deleteAccountByMe = catchAsync(async (req, res, next) => {
         success: true,
         message: "Account Delete Successfully",
     });
+});
+
+
+exports.deleteAccountByAdmin = catchAsync(async (req, res, next) => {
+
+    const { id } = req.params;
+    const user = await User.findById(req.user._id);
+    if (user.role == "ADMIN" || user.role == "SUPER ADMIN") {
+        const deleteuser = await User.findById(id);
+        deleteuser.status = "DELETE";
+        await deleteuser.save();
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Account Delete Successfully",
+        });
+    } else {
+        throw new ApiError(401, "You are Unathorized user"); 
+    }
+   
+   
 });
