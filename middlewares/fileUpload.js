@@ -7,10 +7,10 @@ const configureFileUpload = () => {
             if (
                 file.mimetype === "image/jpeg" ||
                 file.mimetype === "image/png" ||
-                file.mimetype === "image/jpg" ||
-                file.mimetype === "video/mp4"
+                file.mimetype === "image/jpg" 
+              
             ) {
-                cb(null, path.join(__dirname, "../uploads/media"));
+                cb(null, path.join(__dirname, "../uploads/images"));
             } else {
                 cb(new Error("Invalid file type"));
             }
@@ -22,7 +22,7 @@ const configureFileUpload = () => {
     });
 
     const fileFilter = (req, file, cb) => {
-        const allowedFieldnames = ["image", "slider", "media", "thumbnail"];
+        const allowedFieldnames = ["productImage","image","categoryImage"];
 
         if (file.fieldname === undefined) {
             // Allow requests without any files
@@ -31,8 +31,8 @@ const configureFileUpload = () => {
             if (
                 file.mimetype === "image/jpeg" ||
                 file.mimetype === "image/png" ||
-                file.mimetype === "image/jpg" ||
-                file.mimetype === "video/mp4"
+                file.mimetype === "image/jpg" 
+               
             ) {
                 cb(null, true);
             } else {
@@ -47,10 +47,10 @@ const configureFileUpload = () => {
         storage: storage,
         fileFilter: fileFilter,
     }).fields([
+        { name: "productImage", maxCount: 10 },
         { name: "image", maxCount: 1 },
-        { name: "slider", maxCount: 3 },
-        { name: "media", maxCount: 1 },
-        { name: "thumbnail", maxCount: 1 },
+        { name: "categoryImage", maxCount: 1 },
+        
     ]);
 
     return upload;
