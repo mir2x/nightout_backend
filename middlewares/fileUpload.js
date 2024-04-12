@@ -10,7 +10,7 @@ const configureFileUpload = () => {
                 file.mimetype === "image/jpg" 
               
             ) {
-                cb(null, path.join(__dirname, "../uploads/images"));
+                cb(null, path.join(__dirname, "../public/uploads/images"));
             } else {
                 cb(new Error("Invalid file type"));
             }

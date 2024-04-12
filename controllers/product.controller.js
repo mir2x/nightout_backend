@@ -67,7 +67,7 @@ exports.productShow = catchAsync(async (req, res, next) => {
 
     if (req.files && req.files.productImage) {
         req.files.productImage.forEach((file) => {
-            const productImageUrl = `/public/uploads/images/${file.filename}`;
+            const productImageUrl = `public/uploads/images/${file.filename}`;
             //const publicFileUrl = createFileDetails('kyc', file.filename)
             publicImageUrl.push(productImageUrl);
         });
