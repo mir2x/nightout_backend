@@ -15,6 +15,9 @@ const categorySchema = new mongoose.Schema(
 
 
         },
+       someExtraField: {
+            type: mongoose.Schema.Types.Mixed
+        }
        
     },
     { timestamps: true }

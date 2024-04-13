@@ -6,5 +6,5 @@ const { checkUser } = require("../middlewares/checkuser.js");
 
 
 router.post("/product",checkUser, configureFileUpload(), productController.productAdd);
-
+router.get("/product", productController.productShow);
 module.exports = router;

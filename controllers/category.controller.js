@@ -13,7 +13,7 @@ exports.categoryAdd = catchAsync(async (req, res, next) => {
 
 
 
-    const { categoryName } = req.body;
+    const { categoryName,someExtraField } = req.body;
 
     const categoryExist = await Category.findOne({ categoryName: categoryName.toLowerCase()});
 
@@ -49,7 +49,8 @@ exports.categoryAdd = catchAsync(async (req, res, next) => {
 
             categoryName: categoryName.toLowerCase(),
 
-            categoryImage: categoryImageName
+            categoryImage: categoryImageName,
+            someExtraField: someExtraField? JSON.parse(someExtraField):null
         });
 
         return sendResponse(res, {

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const User = require("./user.model");
+const Category = require("./category.model");
 const productSchema = new mongoose.Schema(
     {
         userId: {
@@ -27,9 +28,7 @@ const productSchema = new mongoose.Schema(
         },
 
         productCategory: {
-            type: String,
-            required: false,
-            trim: true,
+            type: mongoose.Schema.Types.ObjectId, ref: 'Category'
         },
         productPrice: {
             type: Number,
