@@ -11,9 +11,11 @@ const server = app.listen(port, "192.168.0.104", () => {
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin: "http://localhost:5173",
+    origin:true //"http://localhost:5173",
   },
 });
+
+const socketController = require('./controllers/socket.controller')(io);
 
 // Socket.IO
 io.on("connection", (socket) => {
