@@ -1,6 +1,6 @@
 const paginationCalculate = (options) => {
     const page = Number(options.page || 1);
-    const limit = Number(options.limit || 1);
+    const limit = Number(options.limit ||5);
 
     const skip = (page - 1) * limit;
 

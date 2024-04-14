@@ -11,7 +11,7 @@ const fs = require("fs");
 const path = require("path");
 const pick = require("../shared/pick.js");
 const paginationCalculate = require("../helpers/paginationHelper");
-
+const User = require("../models/user.model");
 
 exports.productAdd = catchAsync(async (req, res, next) => {
     const { productName, productLocation, productDescription, productCategory, productPrice, productStatus, descriptionBasedOnCategory} = req.body;
@@ -26,7 +26,7 @@ exports.productAdd = catchAsync(async (req, res, next) => {
 
     if (req.files && req.files.productImage) {
         req.files.productImage.forEach((file) => {
-           const productImageUrl = `/public/uploads/images/${file.filename}`;
+           const productImageUrl = `public/uploads/images/${file.filename}`;
             //const publicFileUrl = createFileDetails('kyc', file.filename)
             publicImageUrl.push(productImageUrl);
         });
@@ -64,10 +64,6 @@ exports.productShow = catchAsync(async (req, res, next) => {
     }
 
 
-    // Pagination
-    // const page = parseInt(req.query.page) || 1;
-    // const limit = parseInt(req.query.limit) || 10;
-    // const skip = (page - 1) * limit;
 
     const paginationOptions = pick(req.query, ["limit", "page"]);
     const { limit, page, skip } = paginationCalculate(paginationOptions);
@@ -89,6 +85,145 @@ exports.productShow = catchAsync(async (req, res, next) => {
         },
         data: productsDocument
     });
+
+
+
+});
+
+exports.productShowById = catchAsync(async (req, res, next) => {
+    
+
+    
+    let product = await Product.find({ _id: req.params.id }).populate("productCategory");
+
+
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Product retrived successfully",
+        data: product
+    });
+
+
+
+});
+
+exports.productForSpecificUser = catchAsync(async (req, res, next) => {
+
+    const isExist = await User.findOne({ _id: req.user._id });
+
+    if (isExist.role == "ADMIN" || isExist.role == "SUPER ADMIN") {
+
+        const userId = req.params.userid;
+
+        if (!userId) {
+            return sendResponse(res, {
+                statusCode: httpStatus.BAD_REQUEST,
+                success: false,
+                message: "User ID is required",
+                data: null
+            });
+        }
+
+        const userProducts = await Product.find({ userId });
+        if (userProducts.length === 0) {
+            return sendResponse(res, {
+                statusCode: httpStatus.NOT_FOUND,
+                success: false,
+                message: "No products found for the provided user ID",
+                data: null
+            });
+        }
+
+        let query = {userId};
+
+
+        if (req.params.userId) {
+            query.userId = req.params.userid;
+        }
+
+        // Check if category is provided in query parameters
+        if (req.query.category) {
+            query.productCategory = req.query.category;
+        }
+
+
+
+        const paginationOptions = pick(req.query, ["limit", "page"]);
+        const { limit, page, skip } = paginationCalculate(paginationOptions);
+
+        let products = Product.find(query).skip(skip).limit(limit);
+
+        products = products.populate("productCategory").sort({ createdAt: -1 });
+
+        const productsDocument = await products.exec();
+        const total = userProducts.length;
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Products retrived successfully",
+            pagination: {
+                page,
+                limit,
+                total,
+            },
+            data: productsDocument
+        });
+ 
+    } else {
+        throw new ApiError(401, "You are unathorized");  
+    }
+    
+
+
+});
+
+exports.myProduct = catchAsync(async (req, res, next) => {
+
+   
+
+    const userId = req.user._id;
+
+    const userProducts = await Product.find({userId});
+    if (userProducts.length === 0) {
+        return sendResponse(res, {
+            statusCode: httpStatus.NOT_FOUND,
+            success: false,
+            message: "No products found",
+            data: null
+        });
+    }
+
+    let query = { userId };
+
+    // Check if category is provided in query parameters
+    if (req.query.category) {
+        query.productCategory = req.query.category;
+    }
+
+
+
+    const paginationOptions = pick(req.query, ["limit", "page"]);
+    const { limit, page, skip } = paginationCalculate(paginationOptions);
+
+    let products = Product.find(query).skip(skip).limit(limit);
+
+    products = products.populate("productCategory").sort({ createdAt: -1 });
+
+    const productsDocument = await products.exec();
+    const total = userProducts.length;
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Products retrived successfully",
+        pagination: {
+            page,
+            limit,
+            total,
+        },
+        data: productsDocument
+    });
+    
 
 
 
