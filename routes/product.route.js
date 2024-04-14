@@ -10,4 +10,5 @@ router.get("/product", productController.productShow);
 router.get("/product/:id", productController.productShowById);
 router.get("/product/specific/:userid", checkUser, productController.productForSpecificUser);
 router.get("/product-me", checkUser, productController.myProduct);
+router.delete("/product/:id", checkUser, productController.productDelete);
 module.exports = router;

@@ -228,3 +228,34 @@ exports.myProduct = catchAsync(async (req, res, next) => {
 
 
 });
+
+
+
+exports.productDelete = catchAsync(async (req, res, next) => {
+
+   
+    const product = await Product.findOne({ _id: req.params.id, userId:req.user._id });
+
+    //const product = await Product.deleteOne({ _id: req.params.id, userId: req.user._id });
+
+    if (!product) {
+        return sendResponse(res, {
+            statusCode: httpStatus.NOT_FOUND,
+            success: false,
+            message: "Product not found for the provided Product ID and User ID",
+            data: null
+        });
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Product deleted successfully",
+        data: null
+    });
+
+
+
+});
