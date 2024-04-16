@@ -16,4 +16,7 @@ router.post("/change-password", checkUser, configureFileUpload(), userController
 
 router.post("/delete-account", checkUser, configureFileUpload(), userController.deleteAccountByMe);
 router.patch("/delete-account/:id", checkUser, userController.deleteAccountByAdmin);
+
+
+router.get("/all-users",checkUser,userController.allUsers);
 module.exports = router;

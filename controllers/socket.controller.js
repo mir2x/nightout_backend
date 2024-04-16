@@ -1,30 +1,67 @@
+
+const User = require("../models/user.model");
 module.exports = function (io) {
     const connectedClients = {};
-    const connectedUsers = {};
-    io.on('connection', (socket) => {
+    const connectedUsers = [];
+    io.on('connection', async(socket) => {
         console.log('A user connected');
 
-        socket.on("message", (data) => {
-            console.log(data)
-        })
+        const userId=socket.handshake.auth.token;
+        console.log(userId)
 
-        const username = socket.handshake.query.username;
-        console.log(`User ${username} connected`);
+         await User.findByIdAndUpdate({_id:userId},{$set:{isOnline:"1"}});
 
-        connectedUsers[socket.id] = {
-            username: socket.handshake.query.username // Assuming you pass the username as a query parameter
-        };
+         socket.broadcast.emit("getOnlineUser",{user_id:userId});
 
-        // Emit event to notify all clients about the updated list of online users
-        io.emit('updateOnlineUsers', Object.values(connectedUsers));
+        // socket.on("message", (data) => {
+        //     console.log(data)
+        // })
+
+     
 
 
-        socket.on('disconnect', () => {
+
+
+
+        // const username = socket.handshake.auth.token;
+        // console.log(`User ${username} connected`);
+
+        //  // Check if the username already exists in connectedUsers array
+        //  if (!connectedUsers.includes(username)) {
+        //     connectedUsers.push(username); // Add the username to the array
+        //     // Emit event to notify all clients about the updated list of online users
+        //     io.emit('updateOnlineUser', connectedUsers);
+        // } else {
+        //     console.log(`User ${username} already connected`);
+        //     socket.disconnect(true);
+        //     return;
+        // }
+
+
+
+
+
+       
+       
+
+
+        socket.on('disconnect', async() => {
             console.log('A user disconnected');
-            // Remove the user from the list of connected users
-            delete connectedUsers[socket.id];
-            // Emit event to notify all clients about the updated list of online users
-            io.emit('updateOnlineUsers', Object.values(connectedUsers));
+            // Find the index of the disconnected user in connectedUsers array
+            // const index = connectedUsers.indexOf(username);
+            // if (index !== -1) {
+            //     // Remove the user from the array
+            //     connectedUsers.splice(index, 1);
+            //     // Emit event to notify all clients about the updated list of online users
+            //     io.emit('updateOnlineUser', connectedUsers);
+            // }
+            // console.log(connectedUsers)
+
+            const userId=socket.handshake.auth.token;
+
+            await User.findByIdAndUpdate({_id:userId},{$set:{isOnline:"0"}});
+
+            socket.broadcast.emit("getOfflineUser",{user_id:userId});
         });
 
         // socket.on('message', (data) => {

@@ -21,8 +21,33 @@ exports.userRegister = catchAsync(async (req, res, next) => {
     }
 
     const isExist = await User.findOne({ email: email });
-    if (isExist) {
-        throw new ApiError(409, "Email already exist!");
+
+    if(isExist && isExist.emailVerified==false){
+        const emailVerifyCode = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
+        isExist.emailVerifyCode=emailVerifyCode;
+        await isExist.save();
+        const emailData = {
+            email,
+            subject: "Account Activation Email",
+            html: `
+                    <h1>Hello, ${isExist?.fullName}</h1>
+                    <p>Your email verified code is <h3>${emailVerifyCode}</h3> to verify your email</p>
+                    <small>This Code is valid for 3 minutes</small>
+                  `,
+        };
+    
+        emailWithNodemailer(emailData);
+
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Please check your E-mail to verify your account.",
+        });
+
+
+    }
+    if (isExist && isExist.emailVerified==true) {
+        throw new ApiError(409, "Email already exist!Please login.");
     }
 
     if (password !== confirmPass) {
@@ -148,6 +173,7 @@ exports.userLogin = catchAsync(async (req, res) => {
         message: "Your Are logged in successfully",
         //data: user,
         token: token,
+        data:user
     });
 });
 
@@ -300,4 +326,16 @@ exports.deleteAccountByAdmin = catchAsync(async (req, res, next) => {
    
 });
 
+
+exports.allUsers=catchAsync(async (req, res, next) => {
+    
+    const user = await User.find({emailVerified:true});
+    
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "All users retrive Successfully",
+        data:user
+    });
+});
 
