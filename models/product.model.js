@@ -44,6 +44,11 @@ const productSchema = new mongoose.Schema(
 
         descriptionBasedOnCategory: {
             type: mongoose.Schema.Types.Mixed
+        },
+
+        fetured:{
+           type:Boolean,
+           default:false
         }
     },
     { timestamps: true }

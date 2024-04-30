@@ -14,11 +14,11 @@ const paginationCalculate = require("../helpers/paginationHelper");
 const User = require("../models/user.model");
 
 exports.productAdd = catchAsync(async (req, res, next) => {
-    const { productName, productLocation, productDescription, productCategory, productPrice, productStatus, descriptionBasedOnCategory} = req.body;
-    
-    
+    const { productName, productLocation, productDescription, productCategory, productPrice, productStatus, descriptionBasedOnCategory } = req.body;
 
-    if (!productName ||  !productDescription ||  !productCategory ||  !productPrice ||  !productStatus ||  !descriptionBasedOnCategory || !productLocation) {
+
+
+    if (!productName || !productDescription || !productCategory || !productPrice || !productStatus || !descriptionBasedOnCategory || !productLocation) {
         throw new ApiError(400, "All Field are required");
     }
 
@@ -26,22 +26,22 @@ exports.productAdd = catchAsync(async (req, res, next) => {
 
     if (req.files && req.files.productImage) {
         req.files.productImage.forEach((file) => {
-           const productImageUrl = `public/uploads/images/${file.filename}`;
+            const productImageUrl = `public/uploads/images/${file.filename}`;
             //const publicFileUrl = createFileDetails('kyc', file.filename)
             publicImageUrl.push(productImageUrl);
         });
     }
 
     const product = await Product.create({
-        userId:req.user._id,
+        userId: req.user._id,
         productName,
         productDescription,
         productCategory,
         productPrice,
         productStatus,
         productLocation,
-        descriptionBasedOnCategory:JSON.parse(descriptionBasedOnCategory),
-        productImage:publicImageUrl
+        descriptionBasedOnCategory: JSON.parse(descriptionBasedOnCategory),
+        productImage: publicImageUrl
     });
 
     return sendResponse(res, {
@@ -50,7 +50,7 @@ exports.productAdd = catchAsync(async (req, res, next) => {
         message: "Product add successfully",
     });
 
-    
+
 
 });
 
@@ -91,9 +91,9 @@ exports.productShow = catchAsync(async (req, res, next) => {
 });
 
 exports.productShowById = catchAsync(async (req, res, next) => {
-    
 
-    
+
+
     let product = await Product.find({ _id: req.params.id }).populate("productCategory");
 
 
@@ -135,7 +135,7 @@ exports.productForSpecificUser = catchAsync(async (req, res, next) => {
             });
         }
 
-        let query = {userId};
+        let query = { userId };
 
 
         if (req.params.userId) {
@@ -169,22 +169,22 @@ exports.productForSpecificUser = catchAsync(async (req, res, next) => {
             },
             data: productsDocument
         });
- 
+
     } else {
-        throw new ApiError(401, "You are unathorized");  
+        throw new ApiError(401, "You are unathorized");
     }
-    
+
 
 
 });
 
 exports.myProduct = catchAsync(async (req, res, next) => {
 
-   
+
 
     const userId = req.user._id;
 
-    const userProducts = await Product.find({userId});
+    const userProducts = await Product.find({ userId });
     if (userProducts.length === 0) {
         return sendResponse(res, {
             statusCode: httpStatus.NOT_FOUND,
@@ -223,7 +223,7 @@ exports.myProduct = catchAsync(async (req, res, next) => {
         },
         data: productsDocument
     });
-    
+
 
 
 
@@ -233,8 +233,8 @@ exports.myProduct = catchAsync(async (req, res, next) => {
 
 exports.productDelete = catchAsync(async (req, res, next) => {
 
-   
-    const product = await Product.findOne({ _id: req.params.id, userId:req.user._id });
+
+    const product = await Product.findOne({ _id: req.params.id, userId: req.user._id });
 
     //const product = await Product.deleteOne({ _id: req.params.id, userId: req.user._id });
 
@@ -259,3 +259,94 @@ exports.productDelete = catchAsync(async (req, res, next) => {
 
 
 });
+
+
+exports.searchProducts = catchAsync(async (req, res, next) => {
+
+
+    const products = await Product.find({
+        productName: { $regex: req.body.productName, $options: 'i' },
+    });
+
+
+
+    if (products.length == 0) {
+        return sendResponse(res, {
+            statusCode: httpStatus.NOT_FOUND,
+            success: false,
+            message: "Product not found!",
+            data: null
+        });
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Product retrived successfully",
+        data: products
+    });
+
+
+
+});
+
+
+exports.filterProducts = catchAsync(async (req, res, next) => {
+
+    const paginationOptions = pick(req.query, ['page', 'limit']);
+
+    // Calculate page, limit, and skip values using paginationCalculate function
+    const { page, limit, skip } = paginationCalculate(paginationOptions);
+
+    const { name, minPrice, maxPrice, location } = req.query;
+
+    // Construct filter object based on provided query parameters
+    const filter = {};
+
+    // Filter by product name (case-insensitive)
+    if (name) {
+        filter.productName = { $regex: name, $options: 'i' };
+    }
+
+    // Filter by price range
+    if (minPrice && maxPrice) {
+        filter.productPrice = { $gte: Number(minPrice), $lte: Number(maxPrice) };
+    } else if (minPrice) {
+        filter.productPrice = { $gte: Number(minPrice) };
+    } else if (maxPrice) {
+        filter.productPrice = { $lte: Number(maxPrice) };
+    }
+
+    // Filter by location
+    if (location) {
+        filter.productLocation = location;
+    }
+
+
+
+    try {
+        const total = await Product.countDocuments(filter);
+        // Fetch the products from the database using the constructed filter
+        const products = await Product.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }).populate("productCategory");
+
+
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Product retrived successfully",
+            pagination: {
+                page,
+                limit,
+                total,
+            },
+            data: products
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+
+});
+

@@ -310,7 +310,7 @@ exports.deleteAccountByAdmin = catchAsync(async (req, res, next) => {
 
     const { id } = req.params;
     const user = await User.findById(req.user._id);
-    if (user.role == "ADMIN" || user.role == "SUPER ADMIN") {
+    if (user.role == "SUPER ADMIN") {
         const deleteuser = await User.findById(id);
         deleteuser.status = "DELETE";
         await deleteuser.save();
@@ -338,4 +338,7 @@ exports.allUsers=catchAsync(async (req, res, next) => {
         data:user
     });
 });
+
+
+
 
