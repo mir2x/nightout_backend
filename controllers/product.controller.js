@@ -91,18 +91,47 @@ exports.productShow = catchAsync(async (req, res, next) => {
 });
 
 exports.productShowById = catchAsync(async (req, res, next) => {
+  
+    let product = await Product.findById(req.params.id).populate("productCategory");
+    if (!product) {
+
+        throw new ApiError(404, "Product not found");
+    } 
+
+    const currentDate = new Date(new Date().toISOString().split('T')[0] + 'T00:00:00.000Z');
+    console.log(typeof currentDate)
+
+    // Initialize userViews map if not present
+    if (!product.userViews) {
+        product.userViews = new Map();
+    }
 
 
+    // Check if the user has already viewed the product today
+    const lastViewDate = product.userViews.get(req.user._id);
 
-    let product = await Product.find({ _id: req.params.id }).populate("productCategory");
+    console.log(typeof lastViewDate)
+
+    const hasViewedToday = lastViewDate ? currentDate.toDateString() === new Date(lastViewDate).toDateString() : false;
 
 
+    if (!hasViewedToday) {
+        // Increment the popularity count
+        product.popular += 1;
+
+        // Update the userViews map with the current date
+        product.userViews.set(req.user._id, currentDate);
+
+        // Save the product
+        await product.save();
+    }
     return sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
         message: "Product retrived successfully",
         data: product
-    });
+    }); 
+   
 
 
 
@@ -349,4 +378,53 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
     }
 
 });
+
+
+exports.feturedProduct = catchAsync(async (req, res, next) => {
+
+    if (req.user.role == "ADMIN" || "SUPER ADMIN") {
+
+        const findProduct = await Product.findOne({ _id: req.params.id });
+        if (findProduct) {
+
+            if (findProduct.featured == false) {
+                const updateData = { featured: true }
+
+                const product = await Product.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true });
+
+                return sendResponse(res, {
+                    statusCode: httpStatus.OK,
+                    success: true,
+                    message: "Product featured successfully",
+                    data: product
+
+                });
+            } else {
+                const updateData = { featured: false }
+
+                const product = await Product.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true });
+
+                return sendResponse(res, {
+                    statusCode: httpStatus.OK,
+                    success: true,
+                    message: "Product remove from featured section successfully",
+                    data: product
+
+                });
+            }
+            
+        }
+        else {
+            throw new ApiError(404, "Product not found");
+        }
+        
+       
+    } else {
+        throw new ApiError(401, "You are unathorized user");  
+    }
+ 
+   
+});
+
+
 

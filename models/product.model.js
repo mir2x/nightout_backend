@@ -46,9 +46,20 @@ const productSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.Mixed
         },
 
-        fetured:{
+        featured:{
            type:Boolean,
            default:false
+        },
+
+        popular: {
+            type: Number,
+            default:0
+        },
+
+        userViews: {
+            type: Map,
+            of: Date,
+            default: new Map(),
         }
     },
     { timestamps: true }
