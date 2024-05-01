@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const Product = require("./product.model");
 const userSchema = new mongoose.Schema(
     {
         fullName: {
@@ -49,7 +49,12 @@ const userSchema = new mongoose.Schema(
         },
         emailVerified: { type: Boolean, default: false, required: false },
         emailVerifyCode: { type: String, required: false, required: false },
-        isOnline:{type:String,default:"0"}
+        isOnline: { type: String, default: "0" },
+        
+        wishlist: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product',
+        }],
         
         
     },

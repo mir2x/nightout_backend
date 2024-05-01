@@ -15,6 +15,8 @@ router.get("/product/filter/byquery", checkUser, configureFileUpload(), productC
 
 router.put("/product/featured/:id", checkUser, configureFileUpload(), productController.feturedProduct);
 
+router.put("/product/add/wishlist/:id", checkUser, configureFileUpload(), productController.productWishlist);
+
 
 
 router.delete("/product/:id", checkUser, productController.productDelete);

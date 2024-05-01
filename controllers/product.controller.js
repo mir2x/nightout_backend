@@ -428,3 +428,53 @@ exports.feturedProduct = catchAsync(async (req, res, next) => {
 
 
 
+exports.productWishlist = catchAsync(async (req, res, next) => { 
+
+    const user = await User.findById(req.user._id);
+
+    const product = await Product.findById(req.params.id);
+
+    if (!user) {
+        throw new ApiError(401, "You are unathorized user");  
+    }
+
+    if (!product) {
+        throw new ApiError(404, "Product not found");
+    }
+
+    const productIndex = user.wishlist.indexOf(product._id);
+    if (productIndex > -1) {
+        // Product is in the wishlist, remove it
+        user.wishlist.splice(productIndex, 1);
+        await user.save();
+
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "This product has been remove successfully from your wishlist",
+            data: user.wishlist
+
+        });
+
+    } else {
+        // Product is not in the wishlist, add it
+        user.wishlist.push(product._id);
+
+        await user.save();
+
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "This product has been added successfully from your wishlist",
+            data: user.wishlist
+
+        });
+    }
+
+    // Save the user
+   
+
+});
+
+
+
