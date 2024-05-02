@@ -4,6 +4,7 @@ const app = express();
 const userRoute = require("./routes/user.route");
 const productRoute = require("./routes/product.route");
 const categoryRoute = require("./routes/category.route");
+const aboutAndPrivacyRoute = require("./routes/aboutAndPrivacy.route");
 const globalErrorHandler = require("./middlewares/globalErrorHandler");
 const path = require('path');
 
@@ -17,7 +18,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/api/auth", userRoute);
 app.use("/api", productRoute);
 app.use("/api", categoryRoute);
-
+app.use("/api", aboutAndPrivacyRoute);
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 

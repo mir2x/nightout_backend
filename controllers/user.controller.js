@@ -9,7 +9,7 @@ const catchAsync = require("../shared/CatchAsync.js");
 const userTimers = new Map();
 const fs = require("fs");
 const path = require("path");
-
+const Product = require("../models/product.model");
 
 exports.userRegister = catchAsync(async (req, res, next) => {
     
@@ -337,6 +337,114 @@ exports.allUsers=catchAsync(async (req, res, next) => {
         message: "All users retrive Successfully",
         data:user
     });
+});
+
+
+
+exports.allStatusData=catchAsync(async (req, res, next) => {
+
+
+    //total seller
+    const distinctUserIds = await Product.distinct('userId');
+    const totalSellerCount = distinctUserIds.length;
+    
+
+
+
+
+  // this month seller 
+   const startOfMonth = new Date();
+   startOfMonth.setDate(1);
+   startOfMonth.setHours(0, 0, 0, 0);
+
+   const endOfMonth = new Date();
+   endOfMonth.setMonth(startOfMonth.getMonth() + 1);
+   endOfMonth.setDate(1);
+   endOfMonth.setHours(0, 0, 0, 0);
+
+   // Use Mongoose aggregation to count users who created their account this month and own at least one product
+   const pipeline1 = [
+       {
+           // Filter for users who created their account this month
+           $match: {
+               createdAt: {
+                   $gte: startOfMonth,
+                   $lt: endOfMonth,
+               },
+           },
+       },
+       {
+           // Join with the products collection to find users who own products
+           $lookup: {
+               from: 'products', // Collection name in the database
+               localField: '_id',
+               foreignField: 'userId',
+               as: 'products',
+           },
+       },
+       {
+           // Filter for users who have at least one product
+           $match: {
+               'products.0': { $exists: true },
+           },
+       },
+       {
+           // Group the results and count the distinct users
+           $group: {
+               _id: null,
+               count: { $sum: 1 },
+           },
+       },
+   ];
+
+   // Execute the aggregation pipeline and get the count
+   const results = await User.aggregate(pipeline1);
+   const newSeller = results.length > 0 ? results[0].count : 0;
+
+
+
+
+   //total-active-seller-count-who-has-product
+
+   const pipeline = [
+    {
+        // Filter users who have active status
+        $match: {
+            status: 'ACTIVE',
+        },
+    },
+    {
+        // Join the Product collection to find users who own products
+        $lookup: {
+            from: 'products', // The collection name in the database
+            localField: '_id',
+            foreignField: 'userId',
+            as: 'products',
+        },
+    },
+    {
+        // Filter only users who have at least one product
+        $match: {
+            'products.0': { $exists: true },
+        },
+    },
+    {
+        // Group and count the number of active users who own at least one product
+        $group: {
+            _id: null,
+            count: { $sum: 1 },
+        },
+    },
+];
+
+// Execute the aggregation pipeline and get the count
+const totalresults = await User.aggregate(pipeline);
+const totalActiveSellerCount = totalresults.length > 0 ? totalresults[0].count : 0;
+
+
+
+   res.json({ newSeller,totalSellerCount,totalActiveSellerCount});
+
 });
 
 

@@ -91,12 +91,12 @@ exports.productShow = catchAsync(async (req, res, next) => {
 });
 
 exports.productShowById = catchAsync(async (req, res, next) => {
-  
+
     let product = await Product.findById(req.params.id).populate("productCategory");
     if (!product) {
 
         throw new ApiError(404, "Product not found");
-    } 
+    }
 
     const currentDate = new Date(new Date().toISOString().split('T')[0] + 'T00:00:00.000Z');
     console.log(typeof currentDate)
@@ -130,8 +130,8 @@ exports.productShowById = catchAsync(async (req, res, next) => {
         success: true,
         message: "Product retrived successfully",
         data: product
-    }); 
-   
+    });
+
 
 
 
@@ -412,30 +412,74 @@ exports.feturedProduct = catchAsync(async (req, res, next) => {
 
                 });
             }
-            
+
         }
         else {
             throw new ApiError(404, "Product not found");
         }
-        
-       
+
+
     } else {
-        throw new ApiError(401, "You are unathorized user");  
+        throw new ApiError(401, "You are unathorized user");
     }
- 
-   
+
+
+});
+
+exports.fetchFeaturedProduct=catchAsync(async (req, res, next) => {
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const paginationOptions = pick(req.query, ["limit", "page"]);
+    const { limit, page, skip } = paginationCalculate(paginationOptions);
+
+
+    let query = Product.find({featured:true})
+    .populate("productCategory")
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+    const productsDocument = await query.exec();
+    const total = await Product.countDocuments({ featured:true });
+
+    if(total==0){
+        throw new ApiError(404, "Featured products not found"); 
+    }
+
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Featured products retrived successfully",
+        pagination: {
+            page,
+            limit,
+            total
+          
+        },
+        data: productsDocument
+
+    });
+
+    
+
 });
 
 
 
-exports.productWishlist = catchAsync(async (req, res, next) => { 
+
+exports.productWishlist = catchAsync(async (req, res, next) => {
 
     const user = await User.findById(req.user._id);
 
     const product = await Product.findById(req.params.id);
 
     if (!user) {
-        throw new ApiError(401, "You are unathorized user");  
+        throw new ApiError(401, "You are unathorized user");
     }
 
     if (!product) {
@@ -472,9 +516,241 @@ exports.productWishlist = catchAsync(async (req, res, next) => {
     }
 
     // Save the user
-   
+
 
 });
+
+
+exports.fetchWishlistProduct=catchAsync(async (req, res, next) => {
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const paginationOptions = pick(req.query, ["limit", "page"]);
+    const { limit, page, skip } = paginationCalculate(paginationOptions);
+
+
+    let query = Product.find({ _id: { $in: user.wishlist } })
+    .populate("productCategory")
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+    const productsDocument = await query.exec();
+    const total = await Product.countDocuments({ _id: { $in: user.wishlist } });
+
+    if(total==0){
+        throw new ApiError(404, "Wishlist products not found"); 
+    }
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "My all wishlist product retrived successfully",
+        pagination: {
+            page,
+            limit,
+            total
+          
+        },
+        data: productsDocument
+
+    });
+
+
+});
+
+
+exports.productUpdate = catchAsync(async (req, res, next) => {
+
+    const { id } = req.params;
+
+
+
+    const isExist = await User.findOne({ _id: req.user._id });
+
+    const product = await Product.findOne({ _id: id });
+    console.log(req.user._id == product.userId)
+    if (isExist && product.userId.toString() == req.user._id.toString()) {
+        const existingProduct = await Product.findById(id);
+
+        if (existingProduct) {
+            const updateData = req.body;
+
+
+            const publicImageUrl = [];
+
+            if (req.files && req.files.productImage) {
+
+                if (existingProduct.productImage) {
+                    existingProduct.productImage.forEach((imagePath) => {
+                        // Add code to delete the image file from the file system
+
+                        fs.unlink(imagePath, (err) => {
+                            if (err) {
+                                console.error(`Error deleting image: ${imagePath}`, err);
+                            }
+                        });
+                    });
+                }
+
+
+                req.files.productImage.forEach((file) => {
+                    const productImageUrl = `public/uploads/images/${file.filename}`;
+                    //const publicFileUrl = createFileDetails('kyc', file.filename)
+                    publicImageUrl.push(productImageUrl);
+                });
+            }
+
+
+
+            updateData.productImage = publicImageUrl ? publicImageUrl : existingProduct.productImage;
+
+            const product = await Product.findOneAndUpdate({ _id: id }, updateData, { new: true });
+
+            return sendResponse(res, {
+                statusCode: httpStatus.OK,
+                success: true,
+                message: "Product updated successfully",
+                data: product
+
+            });
+        } else {
+            throw new ApiError(404, "Product not found");
+        }
+
+
+    } else {
+        throw new ApiError(401, "You are unathorized user");
+    }
+});
+
+
+
+
+
+exports.bannerProduct = catchAsync(async (req, res, next) => {
+
+    if (req.user.role == "ADMIN" || "SUPER ADMIN") {
+
+        const findProduct = await Product.findOne({ _id: req.params.id });
+        if (findProduct) {
+
+            if (findProduct.bannerProduct == false) {
+                const updateData = { bannerProduct: true }
+
+                const product = await Product.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true });
+
+                return sendResponse(res, {
+                    statusCode: httpStatus.OK,
+                    success: true,
+                    message: "This product has been added for banner successfully",
+                    data: product
+
+                });
+            } else {
+                const updateData = {bannerProduct: false }
+
+                const product = await Product.findOneAndUpdate({ _id: req.params.id }, updateData, { new: true });
+
+                return sendResponse(res, {
+                    statusCode: httpStatus.OK,
+                    success: true,
+                    message: "This product has been removed from banner section successfully",
+                    data: product
+
+                });
+            }
+
+        }
+        else {
+            throw new ApiError(404, "Product not found");
+        }
+
+
+    } else {
+        throw new ApiError(401, "You are unathorized user");
+    }
+
+
+});
+
+
+exports.fetchBannerProduct=catchAsync(async (req, res, next) => {
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const paginationOptions = pick(req.query, ["limit", "page"]);
+    const { limit, page, skip } = paginationCalculate(paginationOptions);
+
+
+    let query = Product.find({bannerProduct:true})
+    .populate("productCategory")
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+    const productsDocument = await query.exec();
+    const total = await Product.countDocuments({ bannerProduct:true });
+    if(total==0){
+        throw new ApiError(404, "Banner products not found"); 
+    }
+    return sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Banner products retrived successfully",
+        pagination: {
+            page,
+            limit,
+            total
+          
+        },
+        data: productsDocument
+
+    });
+
+    
+
+});
+
+
+
+exports.allSellerList=catchAsync(async (req, res, next) => {
+
+    try {
+        // Use Mongoose's aggregation to fetch users who have products
+        const usersWithProducts = await User.aggregate([
+            {
+                $lookup: {
+                    from: 'products', // Name of the products collection
+                    localField: '_id',
+                    foreignField: 'userId',
+                    as: 'products',
+                },
+            },
+            {
+                $match: {
+                    'products.0': { $exists: true }, // Ensure user has at least one product
+                },
+            },
+        ]);
+
+        res.json(usersWithProducts);
+    } catch (err) {
+        console.error('Error fetching users with products:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+
+
+});
+
+
 
 
 

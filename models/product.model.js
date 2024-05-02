@@ -51,6 +51,11 @@ const productSchema = new mongoose.Schema(
            default:false
         },
 
+        bannerProduct:{
+             type:Boolean,
+             default:false
+        },
+
         popular: {
             type: Number,
             default:0
@@ -67,3 +72,4 @@ const productSchema = new mongoose.Schema(
 
 const Product = mongoose.model("Product", productSchema);
 module.exports = Product;
+

@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require("../controllers/user.controller.js");
 const configureFileUpload = require("../middlewares/fileUpload.js");
 const { checkUser } = require("../middlewares/checkuser.js");
+const productController = require("../controllers/product.controller.js");
 
 router.post("/register", configureFileUpload(), userController.userRegister);
 
@@ -19,4 +20,9 @@ router.patch("/delete-account/:id", checkUser, userController.deleteAccountByAdm
 
 
 router.get("/all-users",checkUser,userController.allUsers);
+
+
+router.get("/all-seller",checkUser,productController.allSellerList);
+
+router.get("/allstatusdata",checkUser,userController.allStatusData);
 module.exports = router;
