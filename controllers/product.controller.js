@@ -63,7 +63,7 @@ exports.productShow = catchAsync(async (req, res, next) => {
         query.productCategory = req.query.category;
     }
 
-
+    query.sold = false;
 
     const paginationOptions = pick(req.query, ["limit", "page"]);
     const { limit, page, skip } = paginationCalculate(paginationOptions);
@@ -73,7 +73,11 @@ exports.productShow = catchAsync(async (req, res, next) => {
     products = products.populate("productCategory").sort({ createdAt: -1 });
 
     const productsDocument = await products.exec();
-    const total = await Product.countDocuments();
+    const total = await Product.countDocuments({ sold: false });
+    if (total == 0) {
+        throw new ApiError(404, "Product not found");
+    }   
+    
     return sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -294,7 +298,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
 
 
     const products = await Product.find({
-        productName: { $regex: req.body.productName, $options: 'i' },
+        productName: { $regex: req.body.productName, $options: 'i' }, sold: false,
     });
 
 
@@ -308,7 +312,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         });
     }
 
-    await Product.findByIdAndDelete(req.params.id);
+    //await Product.findByIdAndDelete(req.params.id);
 
     return sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -333,7 +337,7 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
 
     // Construct filter object based on provided query parameters
     const filter = {};
-
+    filter.sold = false;
     // Filter by product name (case-insensitive)
     if (name) {
         filter.productName = { $regex: name, $options: 'i' };
@@ -355,11 +359,14 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
 
 
 
-    try {
+    
         const total = await Product.countDocuments(filter);
         // Fetch the products from the database using the constructed filter
         const products = await Product.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }).populate("productCategory");
 
+    if (total == 0) {
+        throw new ApiError(404, "Product not found");
+    }
 
         return sendResponse(res, {
             statusCode: httpStatus.OK,
@@ -373,14 +380,14 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
             data: products
         });
 
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    
 
 });
 
 
 exports.feturedProduct = catchAsync(async (req, res, next) => {
+
+   
 
     if (req.user.role == "ADMIN" || "SUPER ADMIN") {
 
@@ -438,14 +445,14 @@ exports.fetchFeaturedProduct=catchAsync(async (req, res, next) => {
     const { limit, page, skip } = paginationCalculate(paginationOptions);
 
 
-    let query = Product.find({featured:true})
+    let query = Product.find({featured:true,sold:false})
     .populate("productCategory")
     .skip(skip)
     .limit(limit)
     .sort({ createdAt: -1 });
 
     const productsDocument = await query.exec();
-    const total = await Product.countDocuments({ featured:true });
+    const total = await Product.countDocuments({ featured:true,sold:false });
 
     if(total==0){
         throw new ApiError(404, "Featured products not found"); 
@@ -533,14 +540,14 @@ exports.fetchWishlistProduct=catchAsync(async (req, res, next) => {
     const { limit, page, skip } = paginationCalculate(paginationOptions);
 
 
-    let query = Product.find({ _id: { $in: user.wishlist } })
+    let query = Product.find({ _id: { $in: user.wishlist },sold:false })
     .populate("productCategory")
     .skip(skip)
     .limit(limit)
     .sort({ createdAt: -1 });
 
     const productsDocument = await query.exec();
-    const total = await Product.countDocuments({ _id: { $in: user.wishlist } });
+    const total = await Product.countDocuments({ _id: { $in: user.wishlist },sold:false });
 
     if(total==0){
         throw new ApiError(404, "Wishlist products not found"); 

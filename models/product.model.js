@@ -65,6 +65,11 @@ const productSchema = new mongoose.Schema(
             type: Map,
             of: Date,
             default: new Map(),
+        },
+
+        sold:{
+            type:Boolean,
+            default:false
         }
     },
     { timestamps: true }
