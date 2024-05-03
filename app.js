@@ -3,6 +3,7 @@ const cors=require("cors");
 const app = express();
 const userRoute = require("./routes/user.route");
 const productRoute = require("./routes/product.route");
+const contactRoute = require("./routes/contact.route");
 const categoryRoute = require("./routes/category.route");
 const aboutAndPrivacyRoute = require("./routes/aboutAndPrivacy.route");
 const globalErrorHandler = require("./middlewares/globalErrorHandler");
@@ -19,6 +20,7 @@ app.use("/api/auth", userRoute);
 app.use("/api", productRoute);
 app.use("/api", categoryRoute);
 app.use("/api", aboutAndPrivacyRoute);
+app.use("/api", contactRoute);
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
