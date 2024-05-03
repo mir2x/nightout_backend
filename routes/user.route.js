@@ -24,5 +24,10 @@ router.get("/all-users",checkUser,userController.allUsers);
 
 router.get("/all-seller",checkUser,productController.allSellerList);
 
-router.get("/allstatusdata",checkUser,userController.allStatusData);
+router.get("/allstatusdata", checkUser, userController.allStatusData);
+
+
+router.get("/seller-count", checkUser, userController.sellerCount);
+
+router.get("/top-seller-list",checkUser,userController.topSellersList)
 module.exports = router;

@@ -31,5 +31,7 @@ router.get("/product/wishlist/all", checkUser, configureFileUpload(), productCon
 router.put("/product/update/:id", checkUser, configureFileUpload(), productController.productUpdate);
 
 
+router.put("/product/sold/:id", checkUser, configureFileUpload(), productController.soldProduct);
+
 router.delete("/product/:id", checkUser, productController.productDelete);
 module.exports = router;

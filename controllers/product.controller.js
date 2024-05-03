@@ -761,3 +761,21 @@ exports.allSellerList=catchAsync(async (req, res, next) => {
 
 
 
+exports.soldProduct = catchAsync(async (req, res, next) => { 
+
+    const findProduct = await Product.findOne({ _id: req.params.id, userId: req.user._id });
+    if (findProduct) {
+        const product = await Product.findOneAndUpdate({ _id: req.params.id }, { sold: true }, { new: true });
+        
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Product sold status updated successfully",
+            data: product
+
+        });
+    } else {
+        throw new ApiError(404, "Product not found"); 
+   }
+
+});
