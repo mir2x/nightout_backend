@@ -185,6 +185,24 @@ exports.userLogin = catchAsync(async (req, res) => {
     });
 });
 
+exports.loggedUserData=catchAsync(async (req, res) => {
+
+    const user = await User.findById(req.user._id);
+
+    if(user){
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Logged user data retrived successfully",
+            data:user
+        }); 
+    }else{
+        throw new ApiError(401, "You are unauthorized"); 
+    }
+    
+});
+
+
 exports.forgotPassword = catchAsync(async (req, res, next) => {
     const email = req.body.email;
     const user = await User.findOne({ email });
@@ -639,6 +657,48 @@ exports.topSellersList = catchAsync(async (req, res, next) => {
 
     
  });
+
+
+
+ exports.profileUpdate=catchAsync(async (req, res) => {
+
+    const{fullName,image,mobileNumber,location}=req.body
+  
+
+    const user = await User.findById(req.user._id);
+
+    if(user){
+
+        const updateData = { fullName, mobileNumber, location };
+
+        if (req.files && req.files['image']) {
+            let imageFileName = '';
+            if (req.files.image[0]) {
+                // Add public/uploads link to the image file
+
+
+                imageFileName = `public/uploads/images/${req.files.image[0].filename}`;
+                updateData.image=imageFileName
+            }
+
+
+        }
+          
+        let userData=await User.findByIdAndUpdate(req.user._id, updateData, { new: true });
+
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Profile update successfully",
+            data:userData
+        });
+
+    }else{
+        throw new ApiError(401, "You are unauthorized");
+    }
+
+});
+
 
 
 

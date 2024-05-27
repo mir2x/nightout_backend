@@ -1,21 +1,21 @@
-const port = process.env.PORT || 6000;
+const port = process.env.PORT || 5000;
 const dbConnection = require("./config/db");
 const app = require("./app");
 require("dotenv").config();
 
 dbConnection(process.env.DB_URL);
 const server = app.listen(port, "192.168.10.45", () => {
-  console.log("Application running on port", port);
+  console.log("Application running on port",`192.168.10.45:`+port);
 });
 
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin:true //"http://localhost:5173",
+    origin: true,
   },
 });
-
-const socketController = require('./controllers/socket.controller')(io);
+app.set("io", io);
+// const socketController = require("./controllers/socket.controller")(io);
 
 // Socket.IO
 io.on("connection", (socket) => {
