@@ -28,6 +28,8 @@ router.put("/product/add/wishlist/:id", checkUser, configureFileUpload(), produc
 router.get("/product/wishlist/all", checkUser, configureFileUpload(), productController.fetchWishlistProduct);
 
 
+router.get("/product/category/:id",configureFileUpload(), productController.productByCategory);
+
 router.put("/product/update/:id", checkUser, configureFileUpload(), productController.productUpdate);
 
 

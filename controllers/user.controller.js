@@ -159,6 +159,14 @@ exports.userLogin = catchAsync(async (req, res) => {
         throw new ApiError(401, "your email is not verified");
     }
 
+    if(user.status=="DELETE"){
+        throw new ApiError(401, "Unauthorized user");  
+    }
+
+    if(user.status=="BLOCK"){
+        throw new ApiError(401, "Your account has been blocked by admin");  
+    }
+
     const ismatch = await bcrypt.compare(password, user.password);
     if (!ismatch) {
         throw new ApiError(401, "your credential doesn't match");
@@ -306,23 +314,43 @@ exports.deleteAccountByMe = catchAsync(async (req, res, next) => {
 });
 
 
-exports.deleteAccountByAdmin = catchAsync(async (req, res, next) => {
+exports.blockAccountByAdmin = catchAsync(async (req, res, next) => {
 
     const { id } = req.params;
     const user = await User.findById(req.user._id);
     if (user.role == "SUPER ADMIN") {
         const deleteuser = await User.findById(id);
-        deleteuser.status = "DELETE";
+        deleteuser.status = "BLOCK";
         await deleteuser.save();
         return sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
-            message: "Account Delete Successfully",
+            message: "Account Blocked Successfully",
         });
     } else {
         throw new ApiError(401, "You are Unathorized user"); 
     }
    
+   
+});
+
+
+exports.activeAccountByAdmin = catchAsync(async (req, res, next) => {
+
+    const { id } = req.params;
+    const user = await User.findById(req.user._id);
+    if (user.role == "SUPER ADMIN" || "ADMIN") {
+        const activeuser = await User.findById(id);
+        activeuser.status = "ACTIVE";
+        await activeuser.save();
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Account Actived Successfully",
+        });
+    } else {
+        throw new ApiError(401, "You are Unathorized user"); 
+    }
    
 });
 

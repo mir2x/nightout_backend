@@ -572,6 +572,8 @@ exports.fetchWishlistProduct=catchAsync(async (req, res, next) => {
 
 exports.productUpdate = catchAsync(async (req, res, next) => {
 
+   
+
     const { id } = req.params;
 
 
@@ -579,7 +581,7 @@ exports.productUpdate = catchAsync(async (req, res, next) => {
     const isExist = await User.findOne({ _id: req.user._id });
 
     const product = await Product.findOne({ _id: id });
-    console.log(req.user._id == product.userId)
+    //console.log(req.user._id == product?.userId)
     if (isExist && product.userId.toString() == req.user._id.toString()) {
         const existingProduct = await Product.findById(id);
 
@@ -778,4 +780,22 @@ exports.soldProduct = catchAsync(async (req, res, next) => {
         throw new ApiError(404, "Product not found"); 
    }
 
+});
+
+
+exports.productByCategory=catchAsync(async (req, res, next) => { 
+
+    const findProducts = await Product.find({ productCategory: req.params.id});
+    if(findProducts.length>0){
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Products retrived based on category successfully",
+            data: findProducts
+    
+        });
+    }else {
+        throw new ApiError(404, "Product not found"); 
+   }
+   
 });
