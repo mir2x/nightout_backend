@@ -6,7 +6,7 @@ const { checkUser } = require("../middlewares/checkuser.js");
 
 
 router.post("/product",checkUser, configureFileUpload(), productController.productAdd);
-router.get("/product", productController.productShow);
+router.get("/product",checkUser, productController.productShow);
 router.get("/product/:id",checkUser, productController.productShowById);
 router.get("/product/specific/:userid", checkUser, productController.productForSpecificUser);
 router.get("/product-me", checkUser, productController.myProduct);

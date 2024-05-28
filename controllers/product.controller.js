@@ -16,8 +16,6 @@ const User = require("../models/user.model");
 exports.productAdd = catchAsync(async (req, res, next) => {
     const { productName, productLocation, productDescription, productCategory, productPrice, productStatus, descriptionBasedOnCategory } = req.body;
 
-
-
     if (!productName || !productDescription || !productCategory || !productPrice || !productStatus || !descriptionBasedOnCategory || !productLocation) {
         throw new ApiError(400, "All Field are required");
     }
@@ -56,6 +54,9 @@ exports.productAdd = catchAsync(async (req, res, next) => {
 
 
 exports.productShow = catchAsync(async (req, res, next) => {
+    
+ 
+
     let query = {};
 
     // Check if category is provided in query parameters
@@ -76,7 +77,14 @@ exports.productShow = catchAsync(async (req, res, next) => {
     const total = await Product.countDocuments({ sold: false });
     if (total == 0) {
         throw new ApiError(404, "Product not found");
-    }   
+    }  
+    
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = productsDocument.map(product => ({
+        ...product.toObject(),
+        wishlist: userWishlist.includes(product._id.toString())
+    }));
     
     return sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -87,7 +95,7 @@ exports.productShow = catchAsync(async (req, res, next) => {
             limit,
             total,
         },
-        data: productsDocument
+        data: modifiedProducts
     });
 
 

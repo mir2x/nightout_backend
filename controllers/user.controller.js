@@ -16,7 +16,7 @@ exports.userRegister = catchAsync(async (req, res, next) => {
     const { fullName, email, password, confirmPass, termAndCondition, role, mobileNumber,location } =
         req.body;
 
-    if (!fullName || !email || !password || !confirmPass || !termAndCondition || !mobileNumber || !location) {
+    if (!fullName || !email || !password || !confirmPass || !mobileNumber || !location) {
         throw new ApiError(400, "All Field are required");
     }
 
@@ -698,6 +698,29 @@ exports.topSellersList = catchAsync(async (req, res, next) => {
     }
 
 });
+
+exports.allAdminFetch=catchAsync(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if(user.role=="ADMIN"||"SUPER ADMIN"){
+        const allAdmin = await User.find({role:"ADMIN"});
+        
+        if(allAdmin.length>0){
+            return sendResponse(res, {
+                statusCode: httpStatus.OK,
+                success: true,
+                message: "All admin fetch successfully",
+                data:allAdmin
+            });
+        }else{
+            throw new ApiError(404, "Not found");
+        }
+
+
+    } else{
+        throw new ApiError(401, "You are unauthorized");
+    }
+})
 
 
 

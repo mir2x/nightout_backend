@@ -27,6 +27,7 @@ router.patch("/active-account/:id", checkUser, userController.activeAccountByAdm
 
 router.get("/all-users", checkUser, userController.allUsers);
 
+router.get("/all-admin-account", checkUser, userController.allAdminFetch);
 
 router.get("/all-seller", checkUser, productController.allSellerList);
 
