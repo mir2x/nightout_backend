@@ -702,19 +702,23 @@ exports.topSellersList = catchAsync(async (req, res, next) => {
 exports.allAdminFetch=catchAsync(async (req, res) => {
     const user = await User.findById(req.user._id);
 
-    if(user.role=="ADMIN"||"SUPER ADMIN"){
-        const allAdmin = await User.find({role:"ADMIN"});
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if(user.role == "ADMIN" || user.role == "SUPER ADMIN"){
+        const allAdmin = await User.find({role:"ADMIN",status:"ACTIVE"});
         
-        if(allAdmin.length>0){
+     
             return sendResponse(res, {
-                statusCode: httpStatus.OK,
+                statusCode: allAdmin.length>0?httpStatus.OK:404,
                 success: true,
-                message: "All admin fetch successfully",
+                message: allAdmin.length>0?"All admin fetch successfully":"Not found",
                 data:allAdmin
             });
-        }else{
-            throw new ApiError(404, "Not found");
-        }
+           
+           
+        
 
 
     } else{

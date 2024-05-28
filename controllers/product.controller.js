@@ -303,13 +303,13 @@ exports.productDelete = catchAsync(async (req, res, next) => {
 
 
 exports.searchProducts = catchAsync(async (req, res, next) => {
-
+    const productName = req.query.productName || ''; 
+  
 
     const products = await Product.find({
-        productName: { $regex: req.body.productName, $options: 'i' }, sold: false,
+        productName: { $regex: productName, $options: 'i' }, 
+        sold: false,
     });
-
-
 
     if (products.length == 0) {
         return sendResponse(res, {
@@ -320,18 +320,15 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         });
     }
 
-    //await Product.findByIdAndDelete(req.params.id);
-
     return sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: "Product retrived successfully",
+        message: "Product retrieved successfully",
         data: products
     });
-
-
-
 });
+
+
 
 
 exports.filterProducts = catchAsync(async (req, res, next) => {
@@ -794,16 +791,14 @@ exports.soldProduct = catchAsync(async (req, res, next) => {
 exports.productByCategory=catchAsync(async (req, res, next) => { 
 
     const findProducts = await Product.find({ productCategory: req.params.id});
-    if(findProducts.length>0){
+   
         return sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Products retrived based on category successfully",
-            data: findProducts
+            statusCode:findProducts.length>0? httpStatus.OK:404,
+            success:findProducts.length>0?true:false,
+            message:findProducts.length>0? "Products retrived based on category successfully":"Product not found",
+            data:findProducts.length>0 ?findProducts:[]
     
         });
-    }else {
-        throw new ApiError(404, "Product not found"); 
-   }
+    
    
 });
