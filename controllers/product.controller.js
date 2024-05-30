@@ -819,12 +819,20 @@ exports.soldProduct = catchAsync(async (req, res, next) => {
 exports.productByCategory=catchAsync(async (req, res, next) => { 
 
     const findProducts = await Product.find({ productCategory: req.params.id});
+
+
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = findProducts.map(product => ({
+        ...product.toObject(),
+        wishlist: userWishlist.includes(product._id.toString())
+    }));
    
         return sendResponse(res, {
-            statusCode:findProducts.length>0? httpStatus.OK:404,
-            success:findProducts.length>0?true:false,
-            message:findProducts.length>0? "Products retrived based on category successfully":"Product not found",
-            data:findProducts.length>0 ?findProducts:[]
+            statusCode:modifiedProducts.length>0? httpStatus.OK:404,
+            success:modifiedProducts.length>0?true:false,
+            message:modifiedProducts.length>0? "Products retrived based on category successfully":"Product not found",
+            data:modifiedProducts.length>0 ?modifiedProducts:[]
     
         });
     
