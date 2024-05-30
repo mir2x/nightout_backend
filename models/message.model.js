@@ -12,6 +12,11 @@ const messageSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
+    receiverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     conversationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Conversation",
