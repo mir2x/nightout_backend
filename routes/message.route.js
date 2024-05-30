@@ -4,17 +4,7 @@ const router = express.Router();
 const messageController = require("../controllers/message.controller");
 const configureFileUpload = require("../middlewares/fileUpload");
 
-router.post(
-  "/send-message/:id", //receiverId
-  configureFileUpload(),
-  checkUser,
-  messageController.sendMessage
-);
-router.get(
-  "/get-message/:id", //conversationId
-  checkUser,
-  messageController.getMessages
-);
+router.get("/get-message/:id", checkUser, messageController.getMessages);
 router.get(
   "/get-conversation/:id", //userId
   checkUser,

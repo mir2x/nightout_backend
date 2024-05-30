@@ -14,29 +14,34 @@ module.exports = function (io) {
 
     //Message send
     socket.on("sendMessage", async (data) => {
-      const { message, senderId, productId } = data;
+      const { message, senderId, productId, receiverId } = data;
       const checkProduct = await Product.findById(productId);
       const checkSenderUser = await User.findById(senderId);
+      const checkReceiverUser = await User.findById(receiverId);
 
-      if (checkProduct === null || checkSenderUser === null) {
-        throw new ApiError(404, "Sender or ProductId not found");
+      if (
+        checkProduct === null ||
+        checkSenderUser === null ||
+        checkReceiverUser === null
+      ) {
+        throw new ApiError(404, "Sender, Receiver or ProductId not found");
       }
 
       let conversation = await Conversation.findOne({
-        participants: { $all: [senderId, productId] },
+        participants: { $all: [senderId, receiverId] },
       });
       // console.log(conversation, 'conversation');
       if (!conversation) {
         conversation = await Conversation.create({
-          participants: [senderId, productId],
+          participants: [senderId, receiverId],
         });
       }
       const newMessage = new Message({
         senderId,
+        receiverId,
         productId,
         message,
         conversationId: conversation._id,
-        // image,
       });
 
       if (newMessage) {

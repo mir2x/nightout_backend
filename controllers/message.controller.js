@@ -4,64 +4,6 @@ const Message = require("../models/message.model");
 const User = require("../models/user.model");
 const catchAsync = require("../shared/CatchAsync");
 
-exports.sendMessage = catchAsync(async (req, res) => {
-  const io = req.app.get("io");
-
-  const { id: receiverId } = req.params;
-  const senderId = req.user?._id.toString();
-  const { files } = req;
-
-  const data = req.body;
-
-  const { message } = data;
-
-  const checkReceiverUser = await User.findById(receiverId);
-  const checkSenderUser = await User.findById(senderId);
-
-  if (checkReceiverUser === null || checkSenderUser === null) {
-    throw new ApiError(404, "Sender or Receiver user not found");
-  }
-
-  let conversation = await Conversation.findOne({
-    participants: { $all: [senderId, receiverId] },
-  });
-  // console.log(conversation, 'conversation');
-  if (!conversation) {
-    conversation = await Conversation.create({
-      participants: [senderId, receiverId],
-    });
-  }
-  let image = undefined;
-
-  //@ts-ignore
-  if (files && files?.image) {
-    //@ts-ignore
-    image = files.image[0].path;
-  }
-  const newMessage = new Message({
-    senderId,
-    receiverId,
-    message,
-    conversationId: conversation._id,
-    image,
-  });
-
-  if (newMessage) {
-    conversation.messages.push(newMessage._id);
-  }
-  await Promise.all([conversation.save(), newMessage.save()]);
-
-  if (conversation && newMessage) {
-    //@ts-ignore
-    io.to(receiverId).emit("getMessage", newMessage);
-  }
-
-  res.json({
-    message: "Message send successful",
-    newMessage,
-  });
-});
-
 // //!
 exports.getMessages = catchAsync(async (req, res, next) => {
   try {
@@ -76,7 +18,7 @@ exports.getMessages = catchAsync(async (req, res, next) => {
     if (!conversation) return res.status(200).json([]);
 
     const messages = conversation.messages;
-    io.emit("getMessages", messages);
+    // io.emit("getMessages", messages);
     return messages;
   } catch (error) {
     //@ts-ignore
