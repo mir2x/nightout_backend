@@ -16,8 +16,6 @@ const User = require("../models/user.model");
 exports.productAdd = catchAsync(async (req, res, next) => {
     const { productName, productLocation, productDescription, productCategory, productPrice, productStatus, descriptionBasedOnCategory } = req.body;
 
-
-
     if (!productName || !productDescription || !productCategory || !productPrice || !productStatus || !descriptionBasedOnCategory || !productLocation) {
         throw new ApiError(400, "All Field are required");
     }
@@ -56,6 +54,9 @@ exports.productAdd = catchAsync(async (req, res, next) => {
 
 
 exports.productShow = catchAsync(async (req, res, next) => {
+    
+ 
+
     let query = {};
 
     // Check if category is provided in query parameters
@@ -76,7 +77,14 @@ exports.productShow = catchAsync(async (req, res, next) => {
     const total = await Product.countDocuments({ sold: false });
     if (total == 0) {
         throw new ApiError(404, "Product not found");
-    }   
+    }  
+    
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = productsDocument.map(product => ({
+        ...product.toObject(),
+        wishlist: userWishlist.includes(product._id.toString())
+    }));
     
     return sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -87,7 +95,7 @@ exports.productShow = catchAsync(async (req, res, next) => {
             limit,
             total,
         },
-        data: productsDocument
+        data: modifiedProducts
     });
 
 
@@ -295,13 +303,20 @@ exports.productDelete = catchAsync(async (req, res, next) => {
 
 
 exports.searchProducts = catchAsync(async (req, res, next) => {
-
+    const productName = req.query.productName || ''; 
+  
 
     const products = await Product.find({
-        productName: { $regex: req.body.productName, $options: 'i' }, sold: false,
+        productName: { $regex: productName, $options: 'i' }, 
+        sold: false,
     });
 
+    const userWishlist = req.user.wishlist;
 
+    const modifiedProducts = products.map(product => ({
+        ...product.toObject(),
+        wishlist: userWishlist.includes(product._id.toString())
+    }));
 
     if (products.length == 0) {
         return sendResponse(res, {
@@ -312,18 +327,15 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         });
     }
 
-    //await Product.findByIdAndDelete(req.params.id);
-
     return sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: "Product retrived successfully",
-        data: products
+        message: "Product retrieved successfully",
+        data: modifiedProducts
     });
-
-
-
 });
+
+
 
 
 exports.filterProducts = catchAsync(async (req, res, next) => {
@@ -368,6 +380,13 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
         throw new ApiError(404, "Product not found");
     }
 
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = products.map(product => ({
+        ...product.toObject(),
+        wishlist: userWishlist.includes(product._id.toString())
+    }));
+
         return sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
@@ -377,7 +396,7 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
                 limit,
                 total,
             },
-            data: products
+            data: modifiedProducts
         });
 
     
@@ -458,6 +477,13 @@ exports.fetchFeaturedProduct=catchAsync(async (req, res, next) => {
         throw new ApiError(404, "Featured products not found"); 
     }
 
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = productsDocument.map(product => ({
+        ...product.toObject(),
+        wishlist: userWishlist.includes(product._id.toString())
+    }));
+
     return sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -468,7 +494,7 @@ exports.fetchFeaturedProduct=catchAsync(async (req, res, next) => {
             total
           
         },
-        data: productsDocument
+        data: modifiedProducts
 
     });
 
@@ -572,6 +598,8 @@ exports.fetchWishlistProduct=catchAsync(async (req, res, next) => {
 
 exports.productUpdate = catchAsync(async (req, res, next) => {
 
+   
+
     const { id } = req.params;
 
 
@@ -579,7 +607,7 @@ exports.productUpdate = catchAsync(async (req, res, next) => {
     const isExist = await User.findOne({ _id: req.user._id });
 
     const product = await Product.findOne({ _id: id });
-    console.log(req.user._id == product.userId)
+    //console.log(req.user._id == product?.userId)
     if (isExist && product.userId.toString() == req.user._id.toString()) {
         const existingProduct = await Product.findById(id);
 
@@ -708,6 +736,13 @@ exports.fetchBannerProduct=catchAsync(async (req, res, next) => {
     if(total==0){
         throw new ApiError(404, "Banner products not found"); 
     }
+
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = productsDocument.map(product => ({
+        ...product.toObject(),
+        wishlist: userWishlist.includes(product._id.toString())
+    }));
     return sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -718,7 +753,7 @@ exports.fetchBannerProduct=catchAsync(async (req, res, next) => {
             total
           
         },
-        data: productsDocument
+        data: modifiedProducts
 
     });
 
@@ -778,4 +813,20 @@ exports.soldProduct = catchAsync(async (req, res, next) => {
         throw new ApiError(404, "Product not found"); 
    }
 
+});
+
+
+exports.productByCategory=catchAsync(async (req, res, next) => { 
+
+    const findProducts = await Product.find({ productCategory: req.params.id});
+   
+        return sendResponse(res, {
+            statusCode:findProducts.length>0? httpStatus.OK:404,
+            success:findProducts.length>0?true:false,
+            message:findProducts.length>0? "Products retrived based on category successfully":"Product not found",
+            data:findProducts.length>0 ?findProducts:[]
+    
+        });
+    
+   
 });

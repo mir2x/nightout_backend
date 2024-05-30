@@ -99,14 +99,19 @@ exports.categoryById = catchAsync(async (req, res, next) => {
 
 
         const category = await Category.findOne({ _id: id });
+        if(category){
+            return sendResponse(res, {
+                statusCode: httpStatus.OK,
+                success: true,
+                message: "Category retrive successfully",
+                data:category
+    
+            });
+        }else{
+            throw new ApiError(404, "Not found");
+        }
         
-        return sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Category retrive successfully",
-            data:category
-
-        });
+        
 
 
     } else {

@@ -6,7 +6,7 @@ const { checkUser } = require("../middlewares/checkuser.js");
 
 
 router.post("/product",checkUser, configureFileUpload(), productController.productAdd);
-router.get("/product", productController.productShow);
+router.get("/product",checkUser, productController.productShow);
 router.get("/product/:id",checkUser, productController.productShowById);
 router.get("/product/specific/:userid", checkUser, productController.productForSpecificUser);
 router.get("/product-me", checkUser, productController.myProduct);
@@ -27,6 +27,8 @@ router.get("/product/banner/all", checkUser, configureFileUpload(), productContr
 router.put("/product/add/wishlist/:id", checkUser, configureFileUpload(), productController.productWishlist);
 router.get("/product/wishlist/all", checkUser, configureFileUpload(), productController.fetchWishlistProduct);
 
+
+router.get("/product/category/:id",configureFileUpload(), productController.productByCategory);
 
 router.put("/product/update/:id", checkUser, configureFileUpload(), productController.productUpdate);
 
