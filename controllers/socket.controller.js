@@ -1,5 +1,6 @@
 const Conversation = require("../models/conversation.model");
 const Message = require("../models/message.model");
+const Product = require("../models/product.model");
 const User = require("../models/user.model");
 module.exports = function (io) {
   // const connectedClients = {};
@@ -13,26 +14,26 @@ module.exports = function (io) {
 
     //Message send
     socket.on("sendMessage", async (data) => {
-      const { message, senderId, receiverId } = data;
-      const checkReceiverUser = await User.findById(receiverId);
+      const { message, senderId, productId } = data;
+      const checkProduct = await Product.findById(productId);
       const checkSenderUser = await User.findById(senderId);
 
-      if (checkReceiverUser === null || checkSenderUser === null) {
-        throw new ApiError(404, "Sender or Receiver user not found");
+      if (checkProduct === null || checkSenderUser === null) {
+        throw new ApiError(404, "Sender or ProductId not found");
       }
 
       let conversation = await Conversation.findOne({
-        participants: { $all: [senderId, receiverId] },
+        participants: { $all: [senderId, productId] },
       });
       // console.log(conversation, 'conversation');
       if (!conversation) {
         conversation = await Conversation.create({
-          participants: [senderId, receiverId],
+          participants: [senderId, productId],
         });
       }
       const newMessage = new Message({
         senderId,
-        receiverId,
+        productId,
         message,
         conversationId: conversation._id,
         // image,
@@ -45,7 +46,8 @@ module.exports = function (io) {
 
       if (conversation && newMessage) {
         //@ts-ignore
-        io.to(receiverId).emit("getMessage", newMessage);
+        io.emit("getMessages", newMessage);
+        // io.to(productId).emit("getMessage", newMessage);
       }
 
       return newMessage;
