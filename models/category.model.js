@@ -1,4 +1,18 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
+
+const SomeExtraFieldSchema = new Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        required: true
+    },
+    option: [String] // Assuming options are strings
+});
 
 const categorySchema = new mongoose.Schema(
     {
@@ -11,13 +25,16 @@ const categorySchema = new mongoose.Schema(
         },
         categoryImage: {
             type: String,
-            required: true,
+            required: false,
 
 
         },
-       someExtraField: {
-            type: mongoose.Schema.Types.Mixed
-        }
+
+        someExtraField:[SomeExtraFieldSchema],
+
+    //    someExtraField: {
+    //         type: mongoose.Schema.Types.Mixed
+    //     }
        
     },
     { timestamps: true }

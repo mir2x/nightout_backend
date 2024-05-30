@@ -9,11 +9,7 @@ const User = require("../models/user.model");
 
 exports.categoryAdd = catchAsync(async (req, res, next) => {
 
-
-
-
-
-    const { categoryName,someExtraField } = req.body;
+   const { categoryName,someExtraField } = req.body;
 
     const categoryExist = await Category.findOne({ categoryName: categoryName.toLowerCase()});
 
@@ -26,13 +22,9 @@ exports.categoryAdd = catchAsync(async (req, res, next) => {
  
     if (isExist.role=="ADMIN" || isExist.role=="SUPER ADMIN") {
        
-
-
         if (!categoryName) {
             throw new ApiError(400, "All Field are required");
         }
-
-
 
         let categoryImageName = '';
 
@@ -43,14 +35,14 @@ exports.categoryAdd = catchAsync(async (req, res, next) => {
             categoryImageName = `public/uploads/images/${req.files.categoryImage[0].filename}`;
 
         }
+        
 
 
         const category = await Category.create({
 
             categoryName: categoryName.toLowerCase(),
-
             categoryImage: categoryImageName,
-            someExtraField: someExtraField? JSON.parse(someExtraField):null
+            someExtraField: someExtraField
         });
 
         return sendResponse(res, {
@@ -63,10 +55,6 @@ exports.categoryAdd = catchAsync(async (req, res, next) => {
     } else {
         throw new ApiError(401, "You are unathorized");
     }
-
-
-
-
 
 
 });
@@ -100,6 +88,8 @@ exports.categoryById = catchAsync(async (req, res, next) => {
 
         const category = await Category.findOne({ _id: id });
         if(category){
+           
+            
             return sendResponse(res, {
                 statusCode: httpStatus.OK,
                 success: true,

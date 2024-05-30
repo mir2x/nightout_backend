@@ -38,6 +38,10 @@ exports.userRegister = catchAsync(async (req, res, next) => {
     
         emailWithNodemailer(emailData);
 
+        const io = req.app.get('io');
+        console.log(io)
+        io.emit('userRegistered', { fullName: isExist.fullName });
+       
         return sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
@@ -108,6 +112,12 @@ exports.userRegister = catchAsync(async (req, res, next) => {
     };
 
     emailWithNodemailer(emailData);
+    
+    const io = req.app.get('io');
+    console.log(io)
+    io.emit('userRegistered', { fullName: user.fullName });
+  
+
     return sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
