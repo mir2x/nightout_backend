@@ -10,7 +10,9 @@ const User = require("../models/user.model");
 exports.categoryAdd = catchAsync(async (req, res, next) => {
 
    const { categoryName,someExtraField } = req.body;
+   //console.log(req.body)
 
+   
     const categoryExist = await Category.findOne({ categoryName: categoryName.toLowerCase()});
 
     if (categoryExist) {
@@ -83,7 +85,7 @@ exports.categoryById = catchAsync(async (req, res, next) => {
     
     const isExist = await User.findOne({ _id: req.user._id });
 
-    if (isExist.role == "ADMIN" || isExist.role == "SUPER ADMIN") {
+    if (isExist.role == "ADMIN" || isExist.role == "SUPER ADMIN" || isExist.role == "USER") {
 
 
         const category = await Category.findOne({ _id: id });

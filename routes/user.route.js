@@ -37,4 +37,8 @@ router.get("/allstatusdata", checkUser, userController.allStatusData);
 router.get("/seller-count", checkUser, userController.sellerCount);
 
 router.get("/top-seller-list", checkUser, userController.topSellersList)
+
+
+router.get("/all-seller-details/:id", checkUser, productController.getSellerById);
+
 module.exports = router;

@@ -12,6 +12,7 @@ const path = require("path");
 const pick = require("../shared/pick.js");
 const paginationCalculate = require("../helpers/paginationHelper");
 const User = require("../models/user.model");
+const mongoose = require("mongoose");
 
 exports.productAdd = catchAsync(async (req, res, next) => {
     const { productName, productLocation, productDescription, productCategory, productPrice, productStatus, descriptionBasedOnCategory } = req.body;
@@ -837,4 +838,40 @@ exports.productByCategory=catchAsync(async (req, res, next) => {
         });
     
    
+});
+
+
+exports.getSellerById = catchAsync(async (req, res, next) => {
+    const { id } = req.params; // Extract the seller's ID from the request parameters
+
+    try {
+        // Use Mongoose's aggregation to fetch the user with products by their ID
+        const userWithProducts = await User.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(id) } // Match the user by their ID
+            },
+            {
+                $lookup: {
+                    from: 'products', // Name of the products collection
+                    localField: '_id',
+                    foreignField: 'userId',
+                    as: 'products',
+                },
+            },
+            {
+                $match: {
+                    'products.0': { $exists: true }, // Ensure user has at least one product
+                },
+            },
+        ]);
+
+        if (userWithProducts.length === 0) {
+            return res.status(404).json({ error: 'Seller not found or no products available' });
+        }
+
+        res.json(userWithProducts[0]);
+    } catch (err) {
+        console.error('Error fetching user with products by ID:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
