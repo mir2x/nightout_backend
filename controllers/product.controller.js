@@ -232,7 +232,7 @@ exports.myProduct = catchAsync(async (req, res, next) => {
             statusCode: httpStatus.NOT_FOUND,
             success: false,
             message: "No products found",
-            data: null
+            data: []
         });
     }
 
@@ -321,10 +321,10 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
 
     if (products.length == 0) {
         return sendResponse(res, {
-            statusCode: httpStatus.NOT_FOUND,
+            statusCode: httpStatus.OK,
             success: false,
             message: "Product not found!",
-            data: null
+            data: []
         });
     }
 
@@ -378,7 +378,14 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
         const products = await Product.find(filter).skip(skip).limit(limit).sort({ createdAt: -1 }).populate("productCategory");
 
     if (total == 0) {
-        throw new ApiError(404, "Product not found");
+
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: false,
+            message: "Product not found!",
+            data: []
+        });
+       
     }
 
     const userWishlist = req.user.wishlist;
@@ -475,7 +482,13 @@ exports.fetchFeaturedProduct=catchAsync(async (req, res, next) => {
     const total = await Product.countDocuments({ featured:true,sold:false });
 
     if(total==0){
-        throw new ApiError(404, "Featured products not found"); 
+        return sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: false,
+            message: "Product not found!",
+            data: []
+        });
+        //throw new ApiError(404, "Featured products not found"); 
     }
 
     const userWishlist = req.user.wishlist;
@@ -830,7 +843,7 @@ exports.productByCategory=catchAsync(async (req, res, next) => {
     }));
    
         return sendResponse(res, {
-            statusCode:modifiedProducts.length>0? httpStatus.OK:404,
+            statusCode:modifiedProducts.length>0? httpStatus.OK:200,
             success:modifiedProducts.length>0?true:false,
             message:modifiedProducts.length>0? "Products retrived based on category successfully":"Product not found",
             data:modifiedProducts.length>0 ?modifiedProducts:[]

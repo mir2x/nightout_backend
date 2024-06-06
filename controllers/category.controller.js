@@ -44,7 +44,7 @@ exports.categoryAdd = catchAsync(async (req, res, next) => {
 
             categoryName: categoryName.toLowerCase(),
             categoryImage: categoryImageName,
-            someExtraField: someExtraField
+            someExtraField: JSON.parse(someExtraField)
         });
 
         return sendResponse(res, {
@@ -175,6 +175,7 @@ exports.categoryUpdate = catchAsync(async (req, res, next) => {
             }
 
             updateData.categoryImage = categoryImageName ? categoryImageName: existingDocument.categoryImage;
+            updateData.someExtraField=updateData.someExtraField?JSON.parse(updateData.someExtraField):someExtraField;
 
             const category = await Category.findOneAndUpdate({ _id: id }, updateData, { new: true });
 
