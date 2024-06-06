@@ -11,7 +11,10 @@ module.exports = function (io) {
     // console.log(userId);
     // await User.findByIdAndUpdate({ _id: userId }, { $set: { isOnline: "1" } });
     // socket.broadcast.emit("getOnlineUser", { user_id: userId });
-
+    socket.on("join-chat", (data) => {
+      console.log(data.id, "conversationId");
+      socket.join(data?.id);
+    });
     //Message send
     socket.on("sendMessage", async (data) => {
       const { message, senderId, productId, receiverId } = data;
@@ -51,7 +54,7 @@ module.exports = function (io) {
 
       if (conversation && newMessage) {
         //@ts-ignore
-        io.emit("getMessages", newMessage);
+        io.to(conversation._id).emit("getMessage", newMessage);
         // io.to(productId).emit("getMessage", newMessage);
       }
 
