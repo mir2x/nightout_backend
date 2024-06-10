@@ -12,6 +12,11 @@ const conversationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
     groupName: {
       type: String,
     },

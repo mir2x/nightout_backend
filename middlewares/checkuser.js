@@ -3,14 +3,14 @@ const User = require("../models/user.model");
 const ApiError = require("../errors/ApiError.js");
 exports.checkUser = async (req, res, next) => {
   const { authorization } = req.headers;
-  console.log(authorization)
+
   let token;
   if (authorization && authorization.startsWith("Bearer")) {
     try {
       token = authorization.split(" ")[1];
-      console.log("tushar", token);
+
       const { userID } = jwt.verify(token, process.env.JWT_SECRET);
-      // console.log("tushar",mydata);
+
       req.user = await User.findById({ _id: userID }).select("-password");
 
       next();
