@@ -173,8 +173,8 @@ exports.productForSpecificUser = catchAsync(async (req, res, next) => {
       return sendResponse(res, {
         statusCode: httpStatus.NOT_FOUND,
         success: false,
-        message: "No products found for the provided user ID",
-        data: null,
+        message: "No products found",
+        data: [],
       });
     }
 
@@ -300,6 +300,15 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
 
   if (products.length == 0) {
     return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: false,
+      message: "Product not found!",
+      data: [],
+    });
+  }
+
+  if (products.length == 0) {
+    return sendResponse(res, {
       statusCode: httpStatus.NOT_FOUND,
       success: false,
       message: "Product not found!",
@@ -359,10 +368,41 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
 
   const userWishlist = req.user.wishlist;
 
+  const total = await Product.countDocuments(filter);
+  // Fetch the products from the database using the constructed filter
+  const products = await Product.find(filter)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 })
+    .populate("productCategory");
+
+  if (total == 0) {
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: false,
+      message: "Product not found!",
+      data: [],
+    });
+  }
+
+  const userWishlist = req.user.wishlist;
+
   const modifiedProducts = products.map((product) => ({
     ...product.toObject(),
     wishlist: userWishlist.includes(product._id.toString()),
   }));
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Product retrived successfully",
+    pagination: {
+      page,
+      limit,
+      total,
+    },
+    data: modifiedProducts,
+  });
 
   return sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -440,7 +480,13 @@ exports.fetchFeaturedProduct = catchAsync(async (req, res, next) => {
   const total = await Product.countDocuments({ featured: true, sold: false });
 
   if (total == 0) {
-    throw new ApiError(404, "Featured products not found");
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: false,
+      message: "Product not found!",
+      data: [],
+    });
+    //throw new ApiError(404, "Featured products not found");
   }
 
   const userWishlist = req.user.wishlist;
@@ -746,6 +792,50 @@ exports.productByCategory = catchAsync(async (req, res, next) => {
 
   return sendResponse(res, {
     statusCode: modifiedProducts.length > 0 ? httpStatus.OK : 404,
+    success: modifiedProducts.length > 0 ? true : false,
+    message:
+      modifiedProducts.length > 0
+        ? "Products retrived based on category successfully"
+        : "Product not found",
+    data: modifiedProducts.length > 0 ? modifiedProducts : [],
+  });
+});
+
+exports.soldProduct = catchAsync(async (req, res, next) => {
+  const findProduct = await Product.findOne({
+    _id: req.params.id,
+    userId: req.user._id,
+  });
+  if (findProduct) {
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id },
+      { sold: true },
+      { new: true }
+    );
+
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Product sold status updated successfully",
+      data: product,
+    });
+  } else {
+    throw new ApiError(404, "Product not found");
+  }
+});
+
+exports.productByCategory = catchAsync(async (req, res, next) => {
+  const findProducts = await Product.find({ productCategory: req.params.id });
+
+  const userWishlist = req.user.wishlist;
+
+  const modifiedProducts = findProducts.map((product) => ({
+    ...product.toObject(),
+    wishlist: userWishlist.includes(product._id.toString()),
+  }));
+
+  return sendResponse(res, {
+    statusCode: modifiedProducts.length > 0 ? httpStatus.OK : 200,
     success: modifiedProducts.length > 0 ? true : false,
     message:
       modifiedProducts.length > 0
