@@ -354,13 +354,13 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
     filter.productLocation = location;
   }
 
-  const total = await Product.countDocuments(filter);
+  // const total = await Product.countDocuments(filter);
   // Fetch the products from the database using the constructed filter
-  const products = await Product.find(filter)
-    .skip(skip)
-    .limit(limit)
-    .sort({ createdAt: -1 })
-    .populate("productCategory");
+  // const products = await Product.find(filter)
+  //   .skip(skip)
+  //   .limit(limit)
+  //   .sort({ createdAt: -1 })
+  //   .populate("productCategory");
 
   if (total == 0) {
     throw new ApiError(404, "Product not found");
@@ -385,7 +385,7 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
     });
   }
 
-  const userWishlist = req.user.wishlist;
+  // const userWishlist = req.user.wishlist;
 
   const modifiedProducts = products.map((product) => ({
     ...product.toObject(),
