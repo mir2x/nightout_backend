@@ -220,10 +220,10 @@ exports.myProduct = catchAsync(async (req, res, next) => {
   const userProducts = await Product.find({ userId });
   if (userProducts.length === 0) {
     return sendResponse(res, {
-      statusCode: httpStatus.NOT_FOUND,
+      statusCode: httpStatus.OK,
       success: false,
       message: "No products found",
-      data: null,
+      data: [],
     });
   }
 
@@ -354,7 +354,7 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
     filter.productLocation = location;
   }
 
-  // const total = await Product.countDocuments(filter);
+  const total = await Product.countDocuments(filter);
   // Fetch the products from the database using the constructed filter
   // const products = await Product.find(filter)
   //   .skip(skip)
@@ -368,7 +368,7 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
 
   const userWishlist = req.user.wishlist;
 
-  const total = await Product.countDocuments(filter);
+  // const total = await Product.countDocuments(filter);
   // Fetch the products from the database using the constructed filter
   const products = await Product.find(filter)
     .skip(skip)
@@ -591,7 +591,7 @@ exports.fetchWishlistProduct = catchAsync(async (req, res, next) => {
 
 exports.productUpdate = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
+  console.log(req.body);
   const isExist = await User.findOne({ _id: req.user._id });
 
   const product = await Product.findOne({ _id: id });
@@ -601,6 +601,11 @@ exports.productUpdate = catchAsync(async (req, res, next) => {
 
     if (existingProduct) {
       const updateData = req.body;
+
+      const { descriptionBasedOnCategory, ...othersUpdateDate } = updateData;
+      othersUpdateDate.descriptionBasedOnCategory = JSON.parse(
+        descriptionBasedOnCategory
+      );
 
       const publicImageUrl = [];
 
@@ -624,13 +629,17 @@ exports.productUpdate = catchAsync(async (req, res, next) => {
         });
       }
 
-      updateData.productImage = publicImageUrl
+      othersUpdateDate.productImage = publicImageUrl
         ? publicImageUrl
         : existingProduct.productImage;
 
-      const product = await Product.findOneAndUpdate({ _id: id }, updateData, {
-        new: true,
-      });
+      const product = await Product.findOneAndUpdate(
+        { _id: id },
+        othersUpdateDate,
+        {
+          new: true,
+        }
+      );
 
       return sendResponse(res, {
         statusCode: httpStatus.OK,

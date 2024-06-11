@@ -7,6 +7,7 @@ const contactRoute = require("./routes/contact.route");
 const messageRoute = require("./routes/message.route");
 const categoryRoute = require("./routes/category.route");
 const aboutAndPrivacyRoute = require("./routes/aboutAndPrivacy.route");
+const notification = require("./routes/notification.route");
 const globalErrorHandler = require("./middlewares/globalErrorHandler");
 const path = require("path");
 
@@ -22,6 +23,7 @@ app.use("/api", categoryRoute);
 app.use("/api", aboutAndPrivacyRoute);
 app.use("/api", contactRoute);
 app.use("/api", messageRoute);
+app.use("/api", notification);
 
 app.use("/public", express.static(path.join(__dirname, "public")));
 
@@ -30,4 +32,5 @@ app.get("/", (req, res) => {
 });
 
 app.use(globalErrorHandler);
+
 module.exports = app;

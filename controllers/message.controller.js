@@ -31,11 +31,11 @@ exports.getMessages = catchAsync(async (req, res, next) => {
       success: true,
       message: "Messages retrieved successful",
       data: messages,
-      pagination: {
-        page,
-        limit,
-        totalPage,
-      },
+      // pagination: {
+      //   page,
+      //   limit,
+      //   totalPage,
+      // },
     });
   } catch (error) {
     //@ts-ignore
