@@ -147,7 +147,7 @@ exports.categoryDelete = catchAsync(async (req, res, next) => {
 
 exports.categoryUpdate = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
+  console.log(JSON.parse(req.body?.someExtraField));
   const isExist = await User.findOne({ _id: req.user._id });
 
   if (isExist.role == "ADMIN" || isExist.role == "SUPER ADMIN") {
@@ -157,11 +157,8 @@ exports.categoryUpdate = catchAsync(async (req, res, next) => {
       const updateData = req.body;
 
       let categoryImageName = "";
-
-      // Check if req.files.image exists and is an array
       if (req.files && req.files.categoryImage) {
         fs.unlinkSync(existingDocument.categoryImage);
-
         categoryImageName = `public/uploads/images/${req.files.categoryImage[0].filename}`;
       }
 
@@ -169,14 +166,9 @@ exports.categoryUpdate = catchAsync(async (req, res, next) => {
         ? categoryImageName
         : existingDocument.categoryImage;
 
-      const category = await Category.findOneAndUpdate(
-        { _id: id },
-        updateData,
-        { new: true }
-      );
-
       if (existingDocument) {
         const updateData = req.body;
+        console.log(updateData);
 
         let categoryImageName = "";
 

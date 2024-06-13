@@ -9,4 +9,6 @@ router.get(
   notificationController.myNotification
 );
 
+router.get("/notifications", checkUser, notificationController.notifications);
+
 module.exports = router;

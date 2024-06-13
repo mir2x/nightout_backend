@@ -14,14 +14,27 @@ exports.getMessages = catchAsync(async (req, res, next) => {
     const page = Number(pages || 1);
     const limit = Number(limits || 10);
     const skip = (page - 1) * limit;
-    const { id } = req.params;
+    const { receiverId, productId } = req.query;
+
+    const userId = req.user?._id;
     const conversation = await Message.find({
-      conversationId: id,
+      productId,
+      $or: [
+        { senderId: userId, receiverId: receiverId },
+        { senderId: receiverId, receiverId: userId },
+      ],
     })
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
-    const total = await Message.countDocuments({ conversationId: id });
+
+    const total = await Message.countDocuments({
+      productId,
+      $or: [
+        { senderId: userId, receiverId: receiverId },
+        { senderId: receiverId, receiverId: userId },
+      ],
+    });
 
     const totalPage = Math.ceil(total / limit);
     const messages = conversation;

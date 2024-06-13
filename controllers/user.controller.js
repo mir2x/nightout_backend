@@ -171,15 +171,18 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.userLogin = catchAsync(async (req, res) => {
+exports.userLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+
+  console.log(req.body);
   if (!password && !email) {
     throw new ApiError(400, "All Field are required");
   }
 
   const user = await User.findOne({ email: email });
-  if (!user) {
-    throw new ApiError(204, "User not Found");
+  console.log(user);
+  if (!user || user === null) {
+    throw new ApiError(404, "User not Found");
   }
 
   if (user.emailVerified === false) {
@@ -366,7 +369,7 @@ exports.blockAccountByAdmin = catchAsync(async (req, res, next) => {
       message: "Account Blocked Successfully",
     });
   } else {
-    throw new ApiError(401, "You are Unathorized user");
+    throw new ApiError(401, "You are Unauthorized Admin");
   }
 });
 

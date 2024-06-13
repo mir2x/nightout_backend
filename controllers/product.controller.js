@@ -13,6 +13,7 @@ const pick = require("../shared/pick.js");
 const paginationCalculate = require("../helpers/paginationHelper");
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
+const Notification = require("../models/notification.model.js");
 
 exports.productAdd = catchAsync(async (req, res, next) => {
   const {
@@ -58,7 +59,11 @@ exports.productAdd = catchAsync(async (req, res, next) => {
     descriptionBasedOnCategory: JSON.parse(descriptionBasedOnCategory),
     productImage: publicImageUrl,
   });
-
+  await Notification.create({
+    user: req.user._id,
+    content: `${productName} Added in Product`,
+    role: "ADMIN",
+  });
   return sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -363,7 +368,12 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
   //   .populate("productCategory");
 
   if (total == 0) {
-    throw new ApiError(404, "Product not found");
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: false,
+      message: "Product not found!",
+      data: [],
+    });
   }
 
   const userWishlist = req.user.wishlist;
@@ -591,11 +601,10 @@ exports.fetchWishlistProduct = catchAsync(async (req, res, next) => {
 
 exports.productUpdate = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  console.log(req.body);
   const isExist = await User.findOne({ _id: req.user._id });
 
   const product = await Product.findOne({ _id: id });
-  //console.log(req.user._id == product?.userId)
+
   if (isExist && product.userId.toString() == req.user._id.toString()) {
     const existingProduct = await Product.findById(id);
 
@@ -610,17 +619,16 @@ exports.productUpdate = catchAsync(async (req, res, next) => {
       const publicImageUrl = [];
 
       if (req.files && req.files.productImage) {
-        if (existingProduct.productImage) {
-          existingProduct.productImage.forEach((imagePath) => {
-            // Add code to delete the image file from the file system
-
-            fs.unlink(imagePath, (err) => {
-              if (err) {
-                console.error(`Error deleting image: ${imagePath}`, err);
-              }
-            });
-          });
-        }
+        console.log(req.files + "Images");
+        /* if (existingProduct.productImage) { */
+        /*   existingProduct.productImage.forEach((imagePath) => { */
+        /*     fs.unlink(imagePath, (err) => { */
+        /*       if (err) { */
+        /*         console.error(`Error deleting image: ${imagePath}`, err); */
+        /*       } */
+        /*     }); */
+        /*   }); */
+        /* } */
 
         req.files.productImage.forEach((file) => {
           const productImageUrl = `public/uploads/images/${file.filename}`;
@@ -628,10 +636,9 @@ exports.productUpdate = catchAsync(async (req, res, next) => {
           publicImageUrl.push(productImageUrl);
         });
       }
-
-      othersUpdateDate.productImage = publicImageUrl
-        ? publicImageUrl
-        : existingProduct.productImage;
+      if (publicImageUrl?.length > 0 && publicImageUrl) {
+        othersUpdateDate.productImage = publicImageUrl;
+      }
 
       const product = await Product.findOneAndUpdate(
         { _id: id },
@@ -740,13 +747,47 @@ exports.fetchBannerProduct = catchAsync(async (req, res, next) => {
   });
 });
 
+// exports.allSellerList = catchAsync(async (req, res, next) => {
+//   try {
+//     const usersWithProducts = await User.aggregate([
+//       {
+//         $lookup: {
+//           from: "products", // Name of the products collection
+//           localField: "_id",
+//           foreignField: "userId",
+//           as: "products",
+//         },
+//       },
+//       {
+//         $match: {
+//           "products.0": { $exists: true }, // Ensure user has at least one product
+//         },
+//       },
+//     ]);
+
+//     res.json(usersWithProducts);
+//   } catch (err) {
+//     console.error("Error fetching users with products:", err);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
 exports.allSellerList = catchAsync(async (req, res, next) => {
   try {
-    // Use Mongoose's aggregation to fetch users who have products
+    const { search, page = 1, limit = 10 } = req.query;
+
+    const matchStage = {};
+    if (search) {
+      matchStage.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
     const usersWithProducts = await User.aggregate([
+      { $match: matchStage },
       {
         $lookup: {
-          from: "products", // Name of the products collection
+          from: "products",
           localField: "_id",
           foreignField: "userId",
           as: "products",
@@ -754,12 +795,47 @@ exports.allSellerList = catchAsync(async (req, res, next) => {
       },
       {
         $match: {
-          "products.0": { $exists: true }, // Ensure user has at least one product
+          "products.0": { $exists: true },
         },
+      },
+      { $skip: (page - 1) * limit },
+      { $limit: parseInt(limit, 10) },
+    ]);
+
+    const totalUsers = await User.aggregate([
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "userId",
+          as: "products",
+        },
+      },
+      {
+        $match: {
+          "products.0": { $exists: true },
+        },
+      },
+      {
+        $count: "total",
       },
     ]);
 
-    res.json(usersWithProducts);
+    const total = totalUsers.length > 0 ? totalUsers[0].total : 0;
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Product retrieved successfully",
+      pagination: {
+        total,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        totalPages: Math.ceil(total / limit),
+      },
+      data: usersWithProducts,
+    });
   } catch (err) {
     console.error("Error fetching users with products:", err);
     res.status(500).json({ error: "Internal server error" });

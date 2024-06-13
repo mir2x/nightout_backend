@@ -7,8 +7,6 @@ const globalErrorHandler = (error, req, res, next) => {
   let message = "Something went wrong";
   let errorMessages = [];
 
-  console.log("globalErrorHandler ~~", error.message);
-
   if (error instanceof ApiError) {
     // Custom application errors
     statusCode = error.statusCode;

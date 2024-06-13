@@ -15,8 +15,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Initialize controllers
-
 app.use("/api/auth", userRoute);
 app.use("/api", productRoute);
 app.use("/api", categoryRoute);
