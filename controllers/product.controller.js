@@ -612,9 +612,9 @@ exports.productUpdate = catchAsync(async (req, res, next) => {
       const updateData = req.body;
 
       const { descriptionBasedOnCategory, ...othersUpdateDate } = updateData;
-      othersUpdateDate.descriptionBasedOnCategory = JSON.parse(
-        descriptionBasedOnCategory
-      );
+
+      const perseData = JSON.parse(descriptionBasedOnCategory);
+      othersUpdateDate.descriptionBasedOnCategory = perseData;
 
       const publicImageUrl = [];
 
