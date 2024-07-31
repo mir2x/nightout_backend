@@ -22,6 +22,7 @@ exports.userRegister = catchAsync(async (req, res, next) => {
     role,
     mobileNumber,
     location,
+    userStatus,
   } = req.body;
 
   if (
@@ -91,7 +92,7 @@ exports.userRegister = catchAsync(async (req, res, next) => {
     termAndCondition: JSON.parse(termAndCondition),
     emailVerifyCode,
     mobileNumber,
-
+    userStatus,
     location,
     role: role ? role : "USER",
     image:

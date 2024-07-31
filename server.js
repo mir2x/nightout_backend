@@ -9,8 +9,8 @@ async function main() {
   await mongoose.connect(process.env.DB_URL);
   console.log("Database connected successfully");
 
-  const server = app.listen(port, "167.172.249.13", () => {
-    console.log("Application running on port", `167.172.249.13:` + port);
+  const server = app.listen(port, "192.168.10.116", () => {
+    console.log("Application running on port", `192.168.10.116:` + port);
   });
 
   const io = socketIo(server, {
