@@ -43,12 +43,12 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   if (err.name === "MongooseServerSelectionError") {
     return res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
       success: false,
-      message: "Database connection error",
+      message: err.message,
       data: {},
     });
   }
 
   return res
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
-    .json({ success: false, message: "Internal Server Error", data: {} });
+    .json({ success: false, message: err.message, data: {} });
 };
