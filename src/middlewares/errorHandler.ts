@@ -2,7 +2,7 @@ import createError from "http-errors";
 import StatusCodes from "http-status-codes";
 import { Request, Response, NextFunction } from "express";
 import { logger } from "@shared/logger";
-import { Error } from "mongoose"; // Import the Mongoose Error class
+import { Error } from "mongoose";
 
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction): any => {
   logger.error(`${err.message}\n${err.stack}\n${err.name}`);
@@ -14,7 +14,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   if (err instanceof Error.ValidationError) {
     const errors = Object.values(err.errors)
       .map((e: any) => e.message)
-      .join(", "); // Extract and join error messages
+      .join(", ");
     return res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
       message: `Validation error: ${errors}`,
