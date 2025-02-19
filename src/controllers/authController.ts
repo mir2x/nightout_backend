@@ -8,95 +8,69 @@ import User from "@models/userModel";
 import sendEmail from "@utils/sendEmail";
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { userName, email, role, password, confirmPassword } = req.body;
-  let error, auth;
+  const { userName, email, phoneNumber, password, confirmPassword } = req.body;
 
-  [error, auth] = await to(Auth.findOne({ email }));
-  if (error) return next(error);
+  let auth;
+  auth = await Auth.findByEmail(email);
   if (auth) {
     return res
       .status(StatusCodes.CONFLICT)
       .json({ success: false, message: "Email already exists.", data: { isVerified: auth.isVerified } });
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const session = req.session;
+  auth = new Auth({
+    email,
+    password,
+    isVerified: false,
+    isBlocked: false,
+  });
+  auth.generateVerificationOTP();
+  await auth.save({ session });
 
-  try {
-    const newAuth = new Auth({
-      email,
-      role,
-      password,
-      isVerified: false,
-      isBlocked: false,
-    });
+  const user = new User({
+    auth: auth._id,
+    userName,
+    phoneNumber,
+  });
+  await user.save({session});
+  await sendEmail(email, auth.verificationOTP);
 
-    newAuth.generateVerificationOTP();
-
-    [error, auth] = await to(newAuth.save({ session }));
-    if (error) throw error;
-
-    [error] = await to(
-      User.create(
-        [
-          {
-            auth: auth._id,
-            userName,
-          },
-        ],
-        { session }
-      )
-    );
-    if (error) throw error;
-
-    await session.commitTransaction();
-
-    await sendEmail(email, auth.verificationOTP);
-
-    return res.status(StatusCodes.CREATED).json({
-      success: true,
-      message: "Registration successful",
-      data: { isVerified: auth.isVerified, verificationOTP: auth.verificationOTP },
-    });
-  } catch (error) {
-    await session.abortTransaction();
-    return next(error);
-  } finally {
-    await session.endSession();
-  }
+  return res.status(StatusCodes.CREATED).json({
+    success: true,
+    message: "Registration successful",
+    data: { isVerified: auth.isVerified, verificationOTP: auth.verificationOTP },
+  });
 };
 
 const activate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, verificationOTP } = req.body;
 
-  let error, auth;
-  auth = await Auth.findByEmailWithoutPassword(email);
-  if (!auth) return next(createError(StatusCodes.NOT_FOUND, "User not found"));
+  let auth;
+  auth = await Auth.findByEmail(email);
+  if (!auth) throw createError(StatusCodes.NOT_FOUND, "User not found");
 
   if (!auth.isCorrectVerificationOTP(verificationOTP))
-    return next(createError(StatusCodes.UNAUTHORIZED, "Wrong OTP. Please enter the correct code"));
+    throw createError(StatusCodes.UNAUTHORIZED, "Wrong OTP. Please enter the correct code");
 
   if (auth.isVerificationOTPExpired())
-    return next(createError(StatusCodes.UNAUTHORIZED, "Verification OTP has expired."));
+    throw createError(StatusCodes.UNAUTHORIZED, "Verification OTP has expired.");
 
-  auth.clearVerifictaionOTP();
+  auth.clearVerificationOTP();
   auth.isVerified = true;
-
-  [error] = await to(auth.save());
-  if (error) return next(error);
-
+  await auth.save();
   const accessToken = Auth.generateAccessToken(auth._id!.toString());
 
   return res.status(StatusCodes.OK).json({
     success: true,
     message: "Account successfully verified.",
-    data: { accessToken },
+    data: { accessToken: accessToken },
   });
 };
 
 const login = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, password } = req.body;
-  let error, auth, isPasswordValid;
+  let error, auth;
   [error, auth] = await to(Auth.findOne({ email }));
   if (error) return next(error);
   if (!auth) return next(createError(StatusCodes.NOT_FOUND, "No account found with the given email"));
@@ -105,13 +79,11 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
     return next(createError(StatusCodes.UNAUTHORIZED, "Wrong password. Please try again"));
 
   if (!auth.isVerified) return next(createError(StatusCodes.UNAUTHORIZED, "Verify your email first"));
-
-  const accessToken = auth.generateAccessToken(auth._id!.toString());
-
+  const accessToken = Auth.generateAccessToken(auth._id!.toString());
   return res.status(StatusCodes.OK).json({
     success: true,
     message: "Login successful",
-    data: { accessToken },
+    data: { accessToken: accessToken },
   });
 };
 

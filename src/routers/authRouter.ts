@@ -1,12 +1,13 @@
 import AuthController from "@controllers/authController";
 import express from "express";
 import { authorize } from "@middlewares/authorization";
+import { asyncHandler, asyncSessionHandler } from "@shared/asyncHandler";
 
 const router = express.Router();
 
-router.post("/register", AuthController.register);
-router.post("/activate", AuthController.activate);
-router.post("/login", AuthController.login);
+router.post("/register", asyncSessionHandler(AuthController.register));
+router.post("/activate", asyncHandler(AuthController.activate));
+router.post("/login", asyncHandler(AuthController.login));
 router.post("/resend-otp", AuthController.resendOTP);
 router.post("/recovery", AuthController.recovery);
 router.post("/recovery-verification", AuthController.recoveryVerification);

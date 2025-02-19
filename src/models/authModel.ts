@@ -1,4 +1,4 @@
-import { Schema, model, Document, Model } from "mongoose";
+import { Schema, model, Document, Model, ClientSession } from "mongoose";
 import { Role } from "@shared/enums";
 import bcrypt from "bcrypt";
 import to from "await-to-ts";
@@ -16,14 +16,13 @@ export type AuthSchema = Document & {
   isVerified: boolean;
   comparePassword(password: string): Promise<boolean>;
   generateVerificationOTP(): void;
-  clearVerifictaionOTP(): void;
+  clearVerificationOTP(): void;
   isCorrectVerificationOTP(otp: string): boolean;
   isVerificationOTPExpired(): boolean;
   generateRecoveryOTP(): void;
   clearRecoveryOTP(): void;
   isCorrectRecoveryOTP(otp: string): boolean;
   isRecoveryOTPExpired(): boolean;
-  generateAccessToken(id: string): string;
 };
 
 const authSchema: Schema<AuthSchema> = new Schema<AuthSchema>({
@@ -99,15 +98,6 @@ authSchema.methods.isRecoveryOTPExpired = function (): boolean {
   return this.recoveryOTPExpiredAt !== null && this.recoveryOTPExpiredAt < new Date();
 };
 
-authSchema.statics.generateAccessToken = function (id: string): string {
-  const accessSecret = process.env.JWT_ACCESS_SECRET;
-  return generateToken(id, accessSecret!);
-};
-
-authSchema.statics.findByEmailWithoutPassword = async function (email: string): Promise<AuthSchema | null> {
-  return this.findOne({ email }).select("-password").exec();
-};
-
 authSchema.pre<AuthSchema>("save", async function (next) {
   if (!this.isModified(this.password)) {
     return next();
@@ -119,8 +109,16 @@ authSchema.pre<AuthSchema>("save", async function (next) {
 });
 
 export type AuthModel = Model<AuthSchema> & {
-  findByEmailWithoutPassword(email: string): Promise<AuthSchema | null>;
+  findByEmail(email: string): Promise<AuthSchema | null>;
   generateAccessToken(id: string): string;
+};
+
+authSchema.statics.generateAccessToken = function (id: string): string {
+  return generateToken(id, process.env.JWT_ACCESS_SECRET!);
+};
+
+authSchema.statics.findByEmail = async function (email: string): Promise<AuthSchema | null> {
+  return this.findOne({ email }).select("-password").exec();
 };
 
 const Auth = model<AuthSchema, AuthModel>("Auth", authSchema);
