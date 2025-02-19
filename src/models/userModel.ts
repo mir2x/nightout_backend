@@ -1,12 +1,11 @@
 import { Schema, model, Types, Document } from "mongoose";
-import { Gender, Role } from "@shared/enums";
+import { Gender } from "@shared/enums";
 
 export type DecodedUser = {
   authId: string;
   userId: string;
   userName: string;
   email: string;
-  role: Role;
   isVerified: boolean;
 };
 
