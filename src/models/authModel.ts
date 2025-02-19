@@ -93,23 +93,23 @@ authSchema.methods.isRecoveryOTPExpired = function (): boolean {
   return this.recoveryOTPExpiredAt !== null && this.recoveryOTPExpiredAt < new Date();
 };
 
-authSchema.pre<AuthSchema>("save", async function (next) {
-  if (this.isModified(this.password)) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  return next();
-});
-
-export type AuthModel = Model<AuthSchema> & {
-  findByEmail(email: string): Promise<AuthSchema | null>;
-  generateAccessToken(id: string): string;
+authSchema.statics.findByEmail = async function (email: string): Promise<AuthSchema | null> {
+  return this.findOne({ email }).exec();
 };
 
 authSchema.statics.generateAccessToken = function (id: string): string {
   return generateToken(id, process.env.JWT_ACCESS_SECRET!);
 };
 
-authSchema.statics.findByEmail = async function (email: string): Promise<AuthSchema | null> {
-  return this.findOne({ email }).exec();
+authSchema.pre<AuthSchema>("save", async function (next) {
+  if (this.isModified(this.password)) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  return next();
+});
+
+type AuthModel = Model<AuthSchema> & {
+  findByEmail(email: string): Promise<AuthSchema | null>;
+  generateAccessToken(id: string): string;
 };
 
 const Auth = model<AuthSchema, AuthModel>("Auth", authSchema);
