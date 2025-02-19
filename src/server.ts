@@ -3,14 +3,15 @@ import app from "./app";
 import "dotenv/config";
 import { connectDB } from "@connection/atlasDB";
 import { logger } from "@shared/logger";
+import Admin from "@models/adminModel";
 
 const PORT = process.env.PORT || 8000;
 
-async function startServer() {
+async function startServer() : Promise<void> {
   try {
     await connectDB();
     const server = http.createServer(app);
-
+    await Admin.findOrCreate();
     const shutdown = () => {
       logger.info("Shutting down server...");
       server.close((err) => {
@@ -31,7 +32,7 @@ async function startServer() {
     });
   } catch (error) {
     logger.error("Failed to start the server:", error);
-    process.exit(1); // Exit process on startup failure
+    process.exit(1);
   }
 }
 
