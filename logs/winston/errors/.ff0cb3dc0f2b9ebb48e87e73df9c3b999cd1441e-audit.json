@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/mir/dev/projects/nightout_backend/logs/winston/errors/.ff0cb3dc0f2b9ebb48e87e73df9c3b999cd1441e-audit.json",
+    "files": [
+        {
+            "date": 1739947493923,
+            "name": "/home/mir/dev/projects/nightout_backend/logs/winston/errors/um-2025-02-19-12-error.log",
+            "hash": "cb0e6273909c813326ff674efd886ddd2b7d31897efb656d68a83bcf2d21cc37"
+        }
+    ],
+    "hashType": "sha256"
+}
