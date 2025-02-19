@@ -3,7 +3,6 @@ import app from "./app";
 import "dotenv/config";
 import { connectDB } from "@connection/atlasDB";
 import { logger } from "@shared/logger";
-import initializeSocket from "./socket";
 
 const PORT = process.env.PORT || 8000;
 
@@ -11,7 +10,6 @@ async function startServer() {
   try {
     await connectDB();
     const server = http.createServer(app);
-    initializeSocket(server);
 
     const shutdown = () => {
       logger.info("Shutting down server...");
