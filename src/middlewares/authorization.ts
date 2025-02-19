@@ -19,7 +19,6 @@ export const getUserInfo = async (authId: string): Promise<DecodedUser | null> =
   data = {
     authId: auth._id!.toString(),
     email: auth.email,
-    role: auth.role,
     isVerified: auth.isVerified,
     userId: user._id!.toString(),
     userName: user.userName,
