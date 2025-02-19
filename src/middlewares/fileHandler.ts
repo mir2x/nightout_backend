@@ -15,26 +15,21 @@ const uploadFileToCloudinary = async (file: UploadedFile, folder: string): Promi
 export const fileHandler = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const fileFields = [
-      { fieldName: "avatarImage", folder: "footlove/profile", key: "avatar" },
-      { fieldName: "coverImage", folder: "footlove/cover", key: "cover" },
-      { fieldName: "content[contentImage]", folder: "footlove/content", key: "url" },
-      { fieldName: "content[contentVideo]", folder: "footlove/content", key: "url" },
+      { fieldName: "avatarImage", folder: "nightout/profile", key: "avatar" },
     ];
 
     if (req.files) {
       await Promise.all(
         fileFields.map(async ({ fieldName, folder, key }) => {
           if (fieldName == "content[contentImage]" || fieldName == "content[contentVideo]") {
-            const file = req.files[fieldName];
+            const file = req.files![fieldName];
             if (file) {
-              const fileUrl = await uploadFileToCloudinary(file as UploadedFile, folder);
-              req.body.content[key] = fileUrl;
+              req.body.content[key] = await uploadFileToCloudinary(file as UploadedFile, folder);
             }
           }
-          const file = req.files[fieldName];
+          const file = req.files![fieldName];
           if (file) {
-            const fileUrl = await uploadFileToCloudinary(file as UploadedFile, folder);
-            req.body[key] = fileUrl;
+            req.body[key] = await uploadFileToCloudinary(file as UploadedFile, folder);
           }
         })
       );
