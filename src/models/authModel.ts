@@ -4,11 +4,11 @@ import bcrypt from "bcrypt";
 import to from "await-to-ts";
 import generateOTP from "@utils/generateOTP";
 import { generateToken } from "@utils/jwt";
+import { logger } from "@shared/logger";
 
 export type AuthSchema = Document & {
   email: string;
   password: string;
-  role: Role;
   verificationOTP: string;
   verificationOTPExpiredAt: Date | null;
   recoveryOTP: string;
@@ -33,11 +33,6 @@ const authSchema: Schema<AuthSchema> = new Schema<AuthSchema>({
   },
   password: {
     type: String,
-    required: true,
-  },
-  role: {
-    type: String,
-    enum: Object.values(Role),
     required: true,
   },
   verificationOTP: {
@@ -99,12 +94,8 @@ authSchema.methods.isRecoveryOTPExpired = function (): boolean {
 };
 
 authSchema.pre<AuthSchema>("save", async function (next) {
-  if (!this.isModified(this.password)) {
-    return next();
-  }
-  const [error, hashedPassword] = await to(bcrypt.hash(this.password, 10));
-  if (error) return next(error);
-  this.password = hashedPassword;
+  if (this.isModified(this.password)) return next();
+  this.password = await bcrypt.hash(this.password, 10);
   return next();
 });
 
@@ -118,7 +109,7 @@ authSchema.statics.generateAccessToken = function (id: string): string {
 };
 
 authSchema.statics.findByEmail = async function (email: string): Promise<AuthSchema | null> {
-  return this.findOne({ email }).select("-password").exec();
+  return this.findOne({ email }).exec();
 };
 
 const Auth = model<AuthSchema, AuthModel>("Auth", authSchema);
