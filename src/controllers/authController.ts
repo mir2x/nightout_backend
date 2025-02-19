@@ -6,6 +6,7 @@ import { Request, Response, NextFunction } from "express";
 import Auth from "@models/authModel";
 import User from "@models/userModel";
 import sendEmail from "@utils/sendEmail";
+import { logger } from "@shared/logger";
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { userName, email, phoneNumber, password, confirmPassword } = req.body;
@@ -26,6 +27,7 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
     isBlocked: false,
   });
   auth.generateVerificationOTP();
+  logger.info(auth.verificationOTP);
   await auth.save({ session });
 
   const user = new User({
@@ -45,7 +47,7 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
 
 const activate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, verificationOTP } = req.body;
-
+  logger.info(verificationOTP);
   let auth;
   auth = await Auth.findByEmail(email);
   if (!auth) throw createError(StatusCodes.NOT_FOUND, "User not found");
@@ -70,9 +72,7 @@ const activate = async (req: Request, res: Response, next: NextFunction): Promis
 
 const login = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, password } = req.body;
-  let error, auth;
-  [error, auth] = await to(Auth.findOne({ email }));
-  if (error) return next(error);
+  let auth = await Auth.findByEmail(email);
   if (!auth) return next(createError(StatusCodes.NOT_FOUND, "No account found with the given email"));
 
   if (!(await auth.comparePassword(password)))
@@ -80,6 +80,7 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
 
   if (!auth.isVerified) return next(createError(StatusCodes.UNAUTHORIZED, "Verify your email first"));
   const accessToken = Auth.generateAccessToken(auth._id!.toString());
+
   return res.status(StatusCodes.OK).json({
     success: true,
     message: "Login successful",
@@ -187,7 +188,7 @@ const changePassword = async (req: Request, res: Response, next: NextFunction): 
   if (error) return next(error);
   if (!auth) return next(createError(StatusCodes.NOT_FOUND, "User Not Found"));
 
-  if (await auth.comparePassword(password))
+  if (!(await auth.comparePassword(password)))
     return next(createError(StatusCodes.UNAUTHORIZED, "Wrong Password. Please try again."));
 
   auth.password = newPassword;
