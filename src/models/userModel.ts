@@ -1,5 +1,5 @@
 import { Schema, model, Types, Document } from "mongoose";
-import { ContentType, Gender, Months, Role } from "@shared/enums";
+import { Gender, Role } from "@shared/enums";
 
 export type DecodedUser = {
   authId: string;
@@ -14,23 +14,9 @@ export type UserSchema = Document & {
   auth: Types.ObjectId;
   userName: string;
   avatar: string;
-  cover: string;
-  bio: string;
-  dateOfBirth: {
-    day: number;
-    month: number;
-    year: number;
-  };
-  footsize: number;
-  country: string;
-  gender: Gender;
-  interests: string[];
-  coin: number;
-  content: {
-    type: ContentType;
-    url: string;
-    price: number;
-  };
+  phoneNumber: string;
+  age: number;
+  gender: string;
 };
 
 const userSchema = new Schema(
@@ -47,54 +33,20 @@ const userSchema = new Schema(
     },
     avatar: {
       type: String,
-    },
-    cover: {
-      type: String,
       default: "",
     },
-    bio: {
+    phoneNumber: {
       type: String,
-      trim: true,
+      required: true,
     },
-    dateOfBirth: {
-      day: {
-        type: Number,
-      },
-      month: {
-        type: Number,
-      },
-      year: {
-        type: Number,
-      },
-    },
-    footsize: {
+    age: {
       type: Number,
-    },
-    country: {
-      type: String,
+      default: 0,
     },
     gender: {
       type: String,
       enum: Object.values(Gender),
-    },
-    interests: {
-      type: [String],
-    },
-    coin: {
-      type: Number,
-      default: 0,
-    },
-    content: {
-      type: {
-        type: String,
-        enum: Object.values(ContentType),
-      },
-      url: {
-        type: String,
-      },
-      price: {
-        type: Number,
-      },
+      default: Gender.NONE,
     },
   },
   {
