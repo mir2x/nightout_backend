@@ -57,8 +57,7 @@ const remove = async (fileUrl: string) => {
     if (!publicId) {
       throw new Error("Unable to extract public ID from URL");
     }
-    const result = await cloudinary.uploader.destroy(publicId);
-    return result;
+    return await cloudinary.uploader.destroy(publicId);
   } catch (error: any) {
     console.error("Error deleting file:", error.message);
     throw error;

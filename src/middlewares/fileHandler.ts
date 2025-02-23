@@ -16,20 +16,29 @@ export const fileHandler = async (req: Request, res: Response, next: NextFunctio
   try {
     const fileFields = [
       { fieldName: "avatarImage", folder: "nightout/profile", key: "avatar" },
+      { fieldName: "coverImage", folder: "nightout/bar/cover", key: "cover" },
+      { fieldName: "galleryImages", folder: "nightout/gallery", key: "gallery" }
     ];
 
     if (req.files) {
       await Promise.all(
         fileFields.map(async ({ fieldName, folder, key }) => {
-          if (fieldName == "content[contentImage]" || fieldName == "content[contentVideo]") {
+          if (fieldName === "content[contentImage]" || fieldName === "content[contentVideo]") {
             const file = req.files![fieldName];
             if (file) {
               req.body.content[key] = await uploadFileToCloudinary(file as UploadedFile, folder);
             }
           }
+
           const file = req.files![fieldName];
           if (file) {
-            req.body[key] = await uploadFileToCloudinary(file as UploadedFile, folder);
+            if (fieldName === "galleryImages" && Array.isArray(file)) {
+              req.body[key] = await Promise.all(
+                (file as UploadedFile[]).map((f) => uploadFileToCloudinary(f, folder))
+              );
+            } else {
+              req.body[key] = await uploadFileToCloudinary(file as UploadedFile, folder);
+            }
           }
         })
       );
