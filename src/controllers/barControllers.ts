@@ -16,20 +16,21 @@ const create = async (req: Request, res: Response, next: NextFunction): Promise<
     gallery,
     about
   });
-
   const bar = await newBar.save();
   return res.status(StatusCodes.OK).json({success: true, message: "Bar crated successfully.", data: bar});
 }
 
-// const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-//   const { name, barType, waitTime, crowdMeter, reviews, cover, gallery, about } = req.body;
-//   const id = req.params.id;
-//   const bar = await Bar.findById(id);
-//   if(!bar) throw createError(StatusCodes.NOT_FOUND, "Bar not found");
-//   if(cover && !bar.cover) {
-//     await Cloudinary.remove(bar.cover);
-//   }
-// }
+const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const { updatedFields } = req.body;
+  const id = req.params.id;
+  const bar = await Bar.findById(id);
+  if(!bar) throw createError(StatusCodes.NOT_FOUND, "Bar not found");
+  if(updatedFields.cover && !bar.cover) {
+    await Cloudinary.remove(bar.cover);
+  }
+  const updatedBar = await Bar.findByIdAndUpdate(id, {$set: updatedFields}, {new : true});
+  return res.status(StatusCodes.OK).json({success: true, message: "Bar updated successfully", data: updatedBar});
+}
 
 const getAllBars = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { search } = req.query;
@@ -65,7 +66,9 @@ const getAllBars = async (req: Request, res: Response, next: NextFunction): Prom
 };
 
 const BarController = {
+  create,
   getAllBars,
+  update,
 }
 
 export default BarController;
