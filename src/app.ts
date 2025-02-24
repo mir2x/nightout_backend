@@ -1,20 +1,18 @@
+import cors from "cors";
 import express, { Request, Response, NextFunction } from "express";
 import { notFound } from "@middlewares/notfound";
 import { errorHandler } from "@middlewares/errorHandler";
-import cors from "cors";
+import { requestLogger } from "@middlewares/requestLogger";
 import AuthRouter from "@routes/authRouter";
 import UserRouter from "@routes/userRouter";
-import FaqRouter from "@routes/faqRouter";
 import TaCRouter from "@routes/tacRouter";
 import PrivacyRouter from "@routes/privacyRouter";
-import { requestLogger } from "@middlewares/requestLogger";
+import AdminRouter from "@routes/adminRouter";
+
 
 const app = express();
-
 app.use(requestLogger);
-
 app.use(express.json());
-
 app.use(
   cors({
     origin: "*",
@@ -24,9 +22,9 @@ app.use(
 );
 
 const routes = [
+  {path: "/admin", router: AdminRouter},
   { path: "/auth", router: AuthRouter },
   { path: "/user", router: UserRouter },
-  { path: "/faq", router: FaqRouter },
   { path: "/tac", router: TaCRouter },
   { path: "/privacy", router: PrivacyRouter },
 ];
