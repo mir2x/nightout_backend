@@ -1,8 +1,3 @@
-export enum Role {
-  BUYER = "BUYER",
-  SELLER = "SELLER",
-}
-
 export enum Gender {
   NONE = "NONE",
   MALE = "MALE",
@@ -33,4 +28,12 @@ export enum Day {
 export enum BarScheduleStatus {
   Open = "Open",
   Close = "Close",
+}
+
+export enum AdminRole {
+  All = "All",
+  Dashboard = "Dashboard",
+  User = "User",
+  Bar = "Bar",
+  Settings = "Settings",
 }
