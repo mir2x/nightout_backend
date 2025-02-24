@@ -1,10 +1,7 @@
-import { Schema, model, Document, Model, ClientSession } from "mongoose";
-import { Role } from "@shared/enums";
+import { Schema, model, Document, Model } from "mongoose";
 import bcrypt from "bcrypt";
-import to from "await-to-ts";
 import generateOTP from "@utils/generateOTP";
 import { generateToken } from "@utils/jwt";
-import { logger } from "@shared/logger";
 
 export type AuthSchema = Document & {
   email: string;
@@ -14,6 +11,7 @@ export type AuthSchema = Document & {
   recoveryOTP: string;
   recoveryOTPExpiredAt: Date | null;
   isVerified: boolean;
+  findByEmail(email: string): Promise<any>;
   comparePassword(password: string): Promise<boolean>;
   generateVerificationOTP(): void;
   clearVerificationOTP(): void;
@@ -102,7 +100,7 @@ authSchema.statics.generateAccessToken = function (id: string): string {
 };
 
 authSchema.pre<AuthSchema>("save", async function (next) {
-  if (this.isModified(this.password)) return next();
+  if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   return next();
 });
