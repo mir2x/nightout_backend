@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { UploadedFile } from "express-fileupload";
 import createError from "http-errors";
 import { StatusCodes } from "http-status-codes";
+import { logger } from "@shared/logger";
 
 const uploadFileToCloudinary = async (file: UploadedFile, folder: string): Promise<string> => {
   try {
@@ -21,6 +22,7 @@ export const fileHandler = async (req: Request, res: Response, next: NextFunctio
     ];
 
     if (req.files) {
+
       await Promise.all(
         fileFields.map(async ({ fieldName, folder, key }) => {
           if (fieldName === "content[contentImage]" || fieldName === "content[contentVideo]") {
