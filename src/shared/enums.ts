@@ -35,5 +35,6 @@ export enum AdminRole {
   Dashboard = "Dashboard",
   User = "User",
   Bar = "Bar",
+  Administrator = "Administrator",
   Settings = "Settings",
 }
