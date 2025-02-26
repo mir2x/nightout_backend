@@ -1,11 +1,12 @@
 import express from "express";
 import PrivacyController from "@controllers/privacyControllers";
-import { authorize } from "@middlewares/authorization";
+import { admin_authorize, authorize, canAccessSettings } from "@middlewares/authorization";
+import { asyncHandler } from "@shared/asyncHandler";
 
 const router = express.Router();
 
-router.post("/create", PrivacyController.create);
+router.post("/create", admin_authorize, canAccessSettings, asyncHandler(PrivacyController.create));
 router.get("/", PrivacyController.get);
-router.patch("/update", PrivacyController.update);
+router.patch("/update", admin_authorize, canAccessSettings, asyncHandler(PrivacyController.update));
 
 export default router;
