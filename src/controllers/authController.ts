@@ -13,17 +13,16 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
 
   let auth = await Auth.findByEmail(email);
   if (auth) {
+    const message = auth.isVerified ? "Email already exists! Please login." : "Email already exists! Please verify your account";
     return res
       .status(StatusCodes.CONFLICT)
-      .json({ success: false, message: "Email already exists.", data: { isVerified: auth.isVerified } });
+      .json({ success: false, message: message, data: { isVerified: auth.isVerified } });
   }
 
   const session = req.session;
   auth = new Auth({
     email,
     password,
-    isVerified: false,
-    isBlocked: false,
   });
   auth.generateVerificationOTP();
   logger.info(auth.verificationOTP);
@@ -40,18 +39,17 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
   return res.status(StatusCodes.CREATED).json({
     success: true,
     message: "Registration successful",
-    data: { isVerified: auth.isVerified, verificationOTP: auth.verificationOTP },
+    data: { isVerified: auth.isVerified, otp: auth.verificationOTP },
   });
 };
 
 const activate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { email, verificationOTP } = req.body;
-  logger.info(verificationOTP);
+  const { email, otp } = req.body;
   let auth;
   auth = await Auth.findByEmail(email);
   if (!auth) throw createError(StatusCodes.NOT_FOUND, "User not found");
 
-  if (!auth.isCorrectVerificationOTP(verificationOTP))
+  if (!auth.isCorrectVerificationOTP(otp))
     throw createError(StatusCodes.UNAUTHORIZED, "Wrong OTP. Please enter the correct code");
 
   if (auth.isVerificationOTPExpired())
@@ -89,32 +87,28 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
 
 const resendOTP = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, status } = req.body;
-  let error, auth, verificationOTP, recoveryOTP;
-  [error, auth] = await to(Auth.findOne({ email: email }));
-  if (error) return next(error);
-  if (!auth) return next(createError(StatusCodes.NOT_FOUND, "Account not found"));
+  let auth = await Auth.findOne({ email: email });
+  if (!auth) throw createError(StatusCodes.NOT_FOUND, "Account not found");
 
   if (status === "activate" && auth.isVerified)
     return res
-      .status(StatusCodes.OK)
+      .status(StatusCodes.CONFLICT)
       .json({ success: true, message: "Your account is already verified. Please login.", data: {} });
 
   if (status === "activate" && !auth.isVerified) {
     auth.generateVerificationOTP();
-    [error] = await to(auth.save());
-    if (error) return next(error);
+    await auth.save();
     await sendEmail(email, auth.verificationOTP);
     return res
       .status(StatusCodes.OK)
-      .json({ success: true, message: "OTP resend successful", data: { verificationOTP } });
+      .json({ success: true, message: "OTP resend successful", data: { otp: auth.verificationOTP } });
   }
 
   if (status === "recovery") {
     auth.generateRecoveryOTP();
-    [error] = await to(auth.save());
-    if (error) return next(error);
+    await auth.save();
     await sendEmail(email, auth.recoveryOTP);
-    return res.status(StatusCodes.OK).json({ success: true, message: "OTP resend successful", data: { recoveryOTP } });
+    return res.status(StatusCodes.OK).json({ success: true, message: "OTP resend successful", data: { otp: auth.recoveryOTP } });
   }
 };
 
@@ -129,16 +123,16 @@ const recovery = async (req: Request, res: Response, next: NextFunction): Promis
   await auth.save();
   return res
     .status(StatusCodes.OK)
-    .json({ success: true, message: "Success", data: { recoveryOTP: auth.recoveryOTP } });
+    .json({ success: true, message: "Success", data: { otp: auth.recoveryOTP } });
 };
 
 const recoveryVerification = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { email, recoveryOTP } = req.body;
+  const { email, otp } = req.body;
 
   let auth = await Auth.findByEmail(email);
   if (!auth) return next(createError(StatusCodes.NOT_FOUND, "User not found"));
   if (auth.isRecoveryOTPExpired()) return next(createError(StatusCodes.UNAUTHORIZED, "Recovery OTP has expired."));
-  if (!auth.isCorrectRecoveryOTP(recoveryOTP))
+  if (!auth.isCorrectRecoveryOTP(otp))
     return next(createError(StatusCodes.UNAUTHORIZED, "Wrong OTP. Please try again"));
 
   auth.clearRecoveryOTP();
@@ -160,7 +154,10 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction): P
 
   auth.password = password;
   await auth.save();
-  return res.status(StatusCodes.OK).json({ success: true, message: "Password reset successful", data: {} });
+
+  const accessToken = Auth.generateAccessToken(auth._id!.toString());
+
+  return res.status(StatusCodes.OK).json({ success: true, message: "Password reset successful", data: {accessToken: accessToken} });
 };
 
 const changePassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
