@@ -93,6 +93,10 @@ adminSchema.statics.findByEmail = async function (email: string): Promise<AdminS
   return this.findOne({ email }).exec();
 };
 
+adminSchema.statics.findByEmailWithoutPassword = async function (email: string): Promise<AdminSchema | null> {
+  return this.findOne({ email }).select('-password').exec();
+};
+
 adminSchema.statics.generateAccessToken = function (id: string): string {
   return generateToken(id, process.env.JWT_ACCESS_SECRET!);
 };
@@ -139,6 +143,7 @@ adminSchema.pre<AdminSchema>("save", async function (next) {
 
 type AdminModel = Model<AdminSchema> & {
   findByEmail(email: string): Promise<AdminSchema | null>;
+  findByEmailWithoutPassword(email: string): Promise<AdminSchema | null>
   findOrCreate(): Promise<void>;
   generateAccessToken(id: string): string;
 };

@@ -1,5 +1,6 @@
-import { Schema, model, Types, Document } from "mongoose";
+import { Schema, model, Types, Document, UpdateQuery } from "mongoose";
 import { Gender } from "@shared/enums";
+import Cloudinary from "@shared/cloudinary";
 
 export type DecodedUser = {
   authId: string;
@@ -52,6 +53,23 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+
+userSchema.pre("findOneAndUpdate", async function (next) {
+  const update = this.getUpdate() as UpdateQuery<any>; // Explicitly cast update to UpdateQuery
+
+  if (update?.$set && "avatar" in update.$set) {
+    const user = await this.model.findOne(this.getQuery()).select("avatar");
+    if (user?.avatar) {
+      try {
+        await Cloudinary.remove(user.avatar);
+      } catch (err) {
+        console.error("Error deleting previous avatar from Cloudinary:", err);
+      }
+    }
+  }
+  next();
+});
 
 export const User = model<UserSchema>("User", userSchema);
 export default User;

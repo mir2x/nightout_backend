@@ -3,11 +3,12 @@ import express, { Request, Response, NextFunction } from "express";
 import { notFound } from "@middlewares/notfound";
 import { errorHandler } from "@middlewares/errorHandler";
 import { requestLogger } from "@middlewares/requestLogger";
-import AuthRouter from "@routes/authRouter";
-import UserRouter from "@routes/userRouter";
-import TaCRouter from "@routes/tacRouter";
-import PrivacyRouter from "@routes/privacyRouter";
-import AdminRouter from "@routes/adminRouter";
+import AuthRouter from "@routers/authRouter";
+import UserRouter from "@routers/userRouter";
+import TaCRouter from "@routers/tacRouter";
+import PrivacyRouter from "@routers/privacyRouter";
+import AdminRouter from "@routers/adminRouter";
+import BarRouter from "@routers/barRouter";
 
 
 const app = express();
@@ -17,16 +18,17 @@ app.use(
   cors({
     origin: "*",
     methods: ["GET", "POST", "PATCH", "DELETE"],
-    credentials: true,
+    credentials: true
   })
 );
 
 const routes = [
-  {path: "/admin", router: AdminRouter},
+  { path: "/admin", router: AdminRouter },
   { path: "/auth", router: AuthRouter },
   { path: "/user", router: UserRouter },
   { path: "/tac", router: TaCRouter },
   { path: "/privacy", router: PrivacyRouter },
+  { path: "/bar", router: BarRouter }
 ];
 
 routes.forEach((route) => {

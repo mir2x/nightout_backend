@@ -11,6 +11,7 @@ export type AuthSchema = Document & {
   recoveryOTP: string;
   recoveryOTPExpiredAt: Date | null;
   isVerified: boolean;
+  isBlocked: boolean;
   findByEmail(email: string): Promise<any>;
   comparePassword(password: string): Promise<boolean>;
   generateVerificationOTP(): void;
@@ -49,6 +50,10 @@ const authSchema: Schema<AuthSchema> = new Schema<AuthSchema>({
     type: Boolean,
     default: false,
   },
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 authSchema.methods.comparePassword = async function (password: string) {
