@@ -4,6 +4,11 @@ import { NextFunction, Request, Response } from "express";
 import Admin from "@models/adminModel";
 import sendEmail from "@utils/sendEmail";
 import Cloudinary from "@shared/cloudinary";
+import { logger } from "@shared/logger";
+import Auth from "@models/authModel";
+import User from "@models/userModel";
+import { startOfWeek, endOfWeek, subWeeks, format } from "date-fns";
+import Bar from "@models/barModels";
 
 const login = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, password } = req.body;
@@ -18,7 +23,7 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
   return res.status(StatusCodes.OK).json({
     success: true,
     message: "Login successful",
-    data: { accessToken: accessToken },
+    data: { accessToken: accessToken }
   });
 };
 
@@ -50,7 +55,7 @@ const recoveryVerification = async (req: Request, res: Response, next: NextFunct
   return res.status(StatusCodes.OK).json({
     success: true,
     message: "Email successfully verified.",
-    data: {},
+    data: {}
   });
 };
 
@@ -58,8 +63,8 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction): P
   const { email, password, confirmPassword } = req.body;
 
   let admin = await Admin.findByEmail(email);
-  if (!admin) return next(createError(StatusCodes.NOT_FOUND, "User Not Found"));
-  if (password !== confirmPassword) return next(createError(StatusCodes.BAD_REQUEST, "Passwords don't match"));
+  if (!admin) throw createError(StatusCodes.NOT_FOUND, "User Not Found");
+  if (password !== confirmPassword) throw createError(StatusCodes.BAD_REQUEST, "Passwords don't match");
 
   admin.password = password;
   await admin.save();
@@ -79,6 +84,12 @@ const changePassword = async (req: Request, res: Response, next: NextFunction): 
   return res.status(StatusCodes.OK).json({ success: true, message: "Password changed successfully", data: {} });
 };
 
+const create = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const { userName, email, avatar, phoneNumber, role, password } = req.body;
+  const admin = new Admin({ userName, email, avatar, phoneNumber, role, password });
+  await admin.save();
+  return res.status(StatusCodes.CREATED).json({ success: true, message: "Admin created successfully", data: {} });
+};
 
 const getAllAdmins = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { search } = req.query;
@@ -98,12 +109,12 @@ const getAllAdmins = async (req: Request, res: Response, next: NextFunction): Pr
     $or: [
       { name: { $regex: search, $options: "i" } },
       { email: { $regex: search, $options: "i" } },
-      {phoneNumber: { $regex: search, $options: "i" } },
+      { phoneNumber: { $regex: search, $options: "i" } }
     ]
   } : {};
 
   const admins = await Admin.find(matchCriteria).limit(limit).skip(skip).lean();
-  const total = admins.length;
+  const total = await Admin.countDocuments(matchCriteria);
   const totalPages = Math.ceil(total / limit);
 
   return res.status(StatusCodes.OK).json({
@@ -113,39 +124,178 @@ const getAllAdmins = async (req: Request, res: Response, next: NextFunction): Pr
     }
   });
 
-}
+};
 
 const getAdminInfo = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const email = req.admin.email;
-  const admin = await Admin.findByEmail(email);
-  return res.status(StatusCodes.OK).json({success: true, message: "Admin info successfully.", data: admin });
-}
+  const admin = await Admin.findByEmailWithoutPassword(email);
+  return res.status(StatusCodes.OK).json({ success: true, message: "Admin info successfully.", data: admin });
+};
 
-const updateAdminInfo = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const email = req.admin.email;
-  const {updatedFields} = req.body;
-  const admin = await Admin.findByEmail(email);
-  if(!admin) throw createError(StatusCodes.NOT_FOUND, "Admin not found");
-  if(updatedFields.avatar && admin.avatar) await Cloudinary.remove(admin.avatar);
-  const updatedAdmin = await Admin.findByIdAndUpdate(admin._id, {$set: updatedFields}, {new: true});
-  return res.status(StatusCodes.OK).json({success: true, message: "Admin updated successfully.", data: updatedAdmin });
-}
-
-const updateAdminById = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+const updateAdmin = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
-  const {updatedFields} = req.body;
-  const admin = await Admin.findById(id);
-  if(!admin) throw createError(StatusCodes.NOT_FOUND, "Admin not found");
-  if(updatedFields.avatar && admin.avatar) await Cloudinary.remove(admin.avatar);
-  const updatedAdmin = await Admin.findByIdAndUpdate(admin._id, {$set: updatedFields}, {new: true});
-  return res.status(StatusCodes.OK).json({success: true, message: "Admin updated successfully.", data: updatedAdmin });
-}
+  const email = req.admin.email;
+  const updatedFields = req.body;
+  let admin;
+  if (id) {
+    admin = await Admin.findById(id);
+  } else if (email) {
+    admin = await Admin.findByEmail(email);
+  }
+  if (!admin) throw createError(StatusCodes.NOT_FOUND, "Admin not found");
+  if (updatedFields.avatar && admin.avatar) await Cloudinary.remove(admin.avatar);
+  const updatedAdmin = await Admin.findByIdAndUpdate(admin._id, { $set: updatedFields }, { new: true });
+  return res.status(StatusCodes.OK).json({ success: true, message: "Admin updated successfully.", data: updatedAdmin });
+};
 
 const removeAdminById = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const id = req.params.id;
-  const admin = await Admin.findByIdAndDelete(id);
-  if(!admin) throw createError(StatusCodes.NOT_FOUND, "Admin Not Found");
-}
+  const admin = await Admin.findById(id);
+  if (!admin) throw createError(StatusCodes.NOT_FOUND, "Admin Not Found");
+  if (admin.avatar) await Cloudinary.remove(admin.avatar);
+  await Admin.findByIdAndDelete(id);
+  return res.status(StatusCodes.OK).json({ success: true, message: "Admin removed successfully.", data: {} });
+};
+
+const blockUserToggle = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const id = req.params.id;
+  const auth = await Auth.findById(id);
+  if (!auth) throw createError(StatusCodes.NOT_FOUND, "Auth not found");
+  auth.isBlocked = !auth.isBlocked;
+  await auth.save();
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: auth.isBlocked ? "User blocked successfully" : "User unblocked successfully",
+    data: { isBlocked: auth.isBlocked }
+  });
+};
+
+const analytics = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const totalUsers = await Auth.countDocuments();
+  const activeUsers = await Auth.countDocuments({ isVerified: true });
+  const totalBars = await Bar.countDocuments();
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: "Success",
+    data: { totalUsers: totalUsers, activeUsers: activeUsers, totalBars: totalBars }
+  });
+};
+
+const getYearlyUserGrowth = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const year = parseInt(req.params.year, 10);
+  if (isNaN(year)) throw createError(StatusCodes.BAD_REQUEST, "Invalid year provided.");
+
+  const startOfPrevYear = new Date(`${year - 1}-01-01T00:00:00.000Z`);
+  const endOfThisYear = new Date(`${year}-12-31T23:59:59.999Z`);
+
+  const userGrowth = await User.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfPrevYear,
+          $lte: endOfThisYear
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" }
+        },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { "_id.year": 1, "_id.month": 1 }
+    }
+  ]);
+
+  const monthLabels = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const result: Record<string, { current: number; prev: number }> = {};
+  monthLabels.forEach((month) => {
+    result[month] = { current: 0, prev: 0 };
+  });
+
+  userGrowth.forEach(({ _id, count }) => {
+    const monthIndex = _id.month - 1;
+    const monthName = monthLabels[monthIndex];
+
+    if (_id.year === year) {
+      result[monthName].current = count;
+    } else if (_id.year === year - 1) {
+      result[monthName].prev = count;
+    }
+  });
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: "Successfully retrieved yearly users growth",
+    data: result
+  });
+};
+
+const getWeeklyUserGrowth = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const today = new Date();
+  const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday as start
+  const endOfCurrentWeek = endOfWeek(today, { weekStartsOn: 1 });
+  const startOfPrevWeek = subWeeks(startOfCurrentWeek, 1);
+
+  const currentWeek = Number(format(startOfCurrentWeek, "w"));
+  const prevWeek = Number(format(startOfPrevWeek, "w"));
+
+  const userGrowth = await User.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: startOfPrevWeek,
+          $lte: endOfCurrentWeek
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$createdAt" },
+          week: { $week: "$createdAt" }, // Changed from $isoWeek
+          day: { $dayOfWeek: "$createdAt" }
+        },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { "_id.week": 1, "_id.day": 1 }
+    }
+  ]);
+
+  const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const result: Record<string, { current: number; prev: number }> = {};
+  weekdayLabels.forEach((day) => {
+    result[day] = { current: 0, prev: 0 };
+  });
+
+  userGrowth.forEach(({ _id, count }) => {
+    const dayIndex = _id.day - 1;
+    const dayName = weekdayLabels[(dayIndex + 5) % 7]; // Adjust MongoDB Sunday-based indexing
+
+    if (_id.week === currentWeek) {
+      result[dayName].current = count;
+    } else if (_id.week === prevWeek) {
+      result[dayName].prev = count;
+    }
+  });
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: "Successfully retrieved weekly users growth",
+    data: result
+  });
+};
 
 
 const AdminServices = {
@@ -154,11 +304,15 @@ const AdminServices = {
   recoveryVerification,
   resetPassword,
   changePassword,
+  create,
   getAllAdmins,
   getAdminInfo,
-  updateAdminInfo,
-  updateAdminById,
-  removeAdminById
-}
+  updateAdmin,
+  removeAdminById,
+  blockUserToggle,
+  analytics,
+  getYearlyUserGrowth,
+  getWeeklyUserGrowth
+};
 
 export default AdminServices;
