@@ -9,6 +9,7 @@ import { decodeToken } from "@utils/jwt";
 import { StatusCodes } from "http-status-codes";
 import Admin, { DecodedAdmin } from "@models/adminModel";
 import { asyncHandler } from "@shared/asyncHandler";
+import { logger } from "@shared/logger";
 
 export const getUserInfo = async (authId: string): Promise<DecodedUser | null> => {
   let error, auth, user, data: DecodedUser;
@@ -53,6 +54,7 @@ const authorizeToken = (secret: string, isAdminCheck: boolean = false) => {
     if (isAdminCheck) {
       data = await getAdminInfo(decoded.id);
       if (!data) return next(createError(StatusCodes.FORBIDDEN, "Forbidden"));
+      logger.info(data);
       req.admin = data;
     } else {
       data = await getUserInfo(decoded.id);
@@ -75,9 +77,11 @@ const hasAccess = (role: AdminRole) => {
 };
 
 export const authorize = authorizeToken(process.env.JWT_ACCESS_SECRET!);
+export const admin_authorize = authorizeToken(process.env.JWT_ACCESS_SECRET!, true);
 export const canAccessDashboard = hasAccess(AdminRole.Dashboard);
 export const canAccessUser = hasAccess(AdminRole.User);
 export const canAccessBar = hasAccess(AdminRole.Bar);
+export const canAccessAdministrator = hasAccess(AdminRole.Administrator);
 export const canAccessSettings = hasAccess(AdminRole.Settings);
 
 
