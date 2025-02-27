@@ -90,16 +90,34 @@ exports.productShow = catchAsync(async (req, res, next) => {
 
   const productsDocument = await products.exec();
   const total = await Product.countDocuments({ sold: false });
-  if (total == 0) {
-    throw new ApiError(404, "Product not found");
+  if (total === 0) {
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "No Products Found!",
+      data: [],
+    });
+  }
+  if(req.user) {
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = productsDocument.map((product) => ({
+      ...product.toObject(),
+      wishlist: userWishlist.includes(product._id.toString()),
+    }));
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Products retrived successfully",
+      pagination: {
+        page,
+        limit,
+        total,
+      },
+      data: modifiedProducts,
+    });
   }
 
-  const userWishlist = req.user.wishlist;
-
-  const modifiedProducts = productsDocument.map((product) => ({
-    ...product.toObject(),
-    wishlist: userWishlist.includes(product._id.toString()),
-  }));
 
   return sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -110,7 +128,7 @@ exports.productShow = catchAsync(async (req, res, next) => {
       limit,
       total,
     },
-    data: modifiedProducts,
+    data: productsDocument,
   });
 });
 
@@ -471,12 +489,6 @@ exports.feturedProduct = catchAsync(async (req, res, next) => {
 });
 
 exports.fetchFeaturedProduct = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user._id);
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
   const paginationOptions = pick(req.query, ["limit", "page"]);
   const { limit, page, skip } = paginationCalculate(paginationOptions);
 
@@ -489,22 +501,40 @@ exports.fetchFeaturedProduct = catchAsync(async (req, res, next) => {
   const productsDocument = await query.exec();
   const total = await Product.countDocuments({ featured: true, sold: false });
 
-  if (total == 0) {
+  if (total === 0) {
     return sendResponse(res, {
       statusCode: httpStatus.OK,
-      success: false,
-      message: "Product not found!",
+      success: true,
+      message: "No product found!",
       data: [],
     });
-    //throw new ApiError(404, "Featured products not found");
   }
 
-  const userWishlist = req.user.wishlist;
+  if(req.user) {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
 
-  const modifiedProducts = productsDocument.map((product) => ({
-    ...product.toObject(),
-    wishlist: userWishlist.includes(product._id.toString()),
-  }));
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = productsDocument.map((product) => ({
+      ...product.toObject(),
+      wishlist: userWishlist.includes(product._id.toString()),
+    }));
+
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Featured products retrived successfully",
+      pagination: {
+        page,
+        limit,
+        total,
+      },
+      data: modifiedProducts,
+    });
+  }
 
   return sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -515,7 +545,7 @@ exports.fetchFeaturedProduct = catchAsync(async (req, res, next) => {
       limit,
       total,
     },
-    data: modifiedProducts,
+    data: productsDocument,
   });
 });
 
@@ -707,12 +737,6 @@ exports.bannerProduct = catchAsync(async (req, res, next) => {
 });
 
 exports.fetchBannerProduct = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user._id);
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
   const paginationOptions = pick(req.query, ["limit", "page"]);
   const { limit, page, skip } = paginationCalculate(paginationOptions);
 
@@ -724,16 +748,38 @@ exports.fetchBannerProduct = catchAsync(async (req, res, next) => {
 
   const productsDocument = await query.exec();
   const total = await Product.countDocuments({ bannerProduct: true });
-  if (total == 0) {
-    throw new ApiError(404, "Banner products not found");
+  if (total === 0) {
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "No Product found!",
+      data: [],
+    });
+  }
+  if(req.user) {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    const userWishlist = req.user.wishlist;
+
+    const modifiedProducts = productsDocument.map((product) => ({
+      ...product.toObject(),
+      wishlist: userWishlist.includes(product._id.toString()),
+    }));
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Banner products retrived successfully",
+      pagination: {
+        page,
+        limit,
+        total,
+      },
+      data: modifiedProducts,
+    });
   }
 
-  const userWishlist = req.user.wishlist;
-
-  const modifiedProducts = productsDocument.map((product) => ({
-    ...product.toObject(),
-    wishlist: userWishlist.includes(product._id.toString()),
-  }));
   return sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -743,8 +789,9 @@ exports.fetchBannerProduct = catchAsync(async (req, res, next) => {
       limit,
       total,
     },
-    data: modifiedProducts,
+    data: productsDocument,
   });
+
 });
 
 // exports.allSellerList = catchAsync(async (req, res, next) => {
