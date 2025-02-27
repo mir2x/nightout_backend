@@ -182,8 +182,7 @@ const analytics = async (req: Request, res: Response, next: NextFunction): Promi
 };
 
 const getYearlyUserGrowth = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const year = parseInt(req.params.year, 10);
-  if (isNaN(year)) throw createError(StatusCodes.BAD_REQUEST, "Invalid year provided.");
+  const year = 2025;
 
   const startOfPrevYear = new Date(`${year - 1}-01-01T00:00:00.000Z`);
   const endOfThisYear = new Date(`${year}-12-31T23:59:59.999Z`);

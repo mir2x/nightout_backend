@@ -22,11 +22,11 @@ router.post("/change-password", admin_authorize, canAccessSettings, asyncHandler
 
 // Dashboard
 router.get("/analytics", admin_authorize, canAccessDashboard, asyncHandler(AdminServices.analytics));
-router.get("/get-yearly-user-growth/:year", admin_authorize, canAccessDashboard, asyncHandler(AdminServices.getYearlyUserGrowth));
+router.get("/get-yearly-user-growth", admin_authorize, canAccessDashboard, asyncHandler(AdminServices.getYearlyUserGrowth));
 router.get("/get-weekly-user-growth", admin_authorize, canAccessDashboard, asyncHandler(AdminServices.getWeeklyUserGrowth));
 
 // User
-router.post("/block-toggle/:id", admin_authorize, canAccessUser, AdminServices.blockUserToggle);
+router.post("/block-toggle/:id", admin_authorize, canAccessUser, asyncHandler(AdminServices.blockUserToggle));
 
 // Administrator
 router.post("/create", admin_authorize, canAccessAdministrator, fileUpload(), fileHandler, asyncHandler(AdminServices.create));

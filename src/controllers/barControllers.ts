@@ -49,7 +49,7 @@ const getAllBars = async (req: Request, res: Response, next: NextFunction): Prom
     ]
   } : {};
 
-  const bars = await Bar.find(matchCriteria).select("name about.address.placeName").limit(limit).skip(skip).lean();
+  const bars = await Bar.find(matchCriteria).limit(limit).skip(skip).lean();
   const total = bars.length;
   const totalPages = Math.ceil(total / limit);
 

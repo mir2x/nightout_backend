@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 
 export type BarSchema = {
   name: string;
-  barType: BarType;
+  barType: string;
   waitTime: number;
   crowdMeter: CrowdMeter;
   reviews: number;
@@ -19,7 +19,7 @@ export type BarSchema = {
       day: Day;
       time: string;
       status: BarScheduleStatus;
-    };
+    }[];
     dressCode: string[];
     music: string[];
     snacks: {
@@ -36,7 +36,7 @@ export type BarSchema = {
 
 const barSchema = new Schema<BarSchema>({
   name: { type: String, required: true },
-  barType: { type: String, enum: Object.values(BarType), required: true },
+  barType: { type: String, required: true },
   waitTime: { type: Number, required: true },
   crowdMeter: { type: String, enum: Object.values(CrowdMeter), required: true },
   reviews: { type: Number, required: true },
@@ -48,11 +48,11 @@ const barSchema = new Schema<BarSchema>({
       latitude: { type: Number, required: true },
       longitude: { type: Number, required: true }
     },
-    schedule: {
+    schedule: [{
       day: { type: String, enum: Object.values(Day), required: true },
       time: { type: String, required: true },
       status: { type: String, enum: Object.values(BarScheduleStatus), required: true }
-    },
+    }],
     dressCode: { type: [String], required: true },
     music: { type: [String], required: true },
     snacks: [

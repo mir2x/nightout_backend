@@ -81,31 +81,31 @@ const getAllUsers = async (req: Request, res: Response, next: NextFunction): Pro
     const totalResult = await User.aggregate(countAggregation);
     total = totalResult[0]?.total || 0;
   } else {
-    const fetchedUsers = await to(
+    const fetchedUsers = await
       User.find()
         .populate({ path: "auth", select: "email isBlocked" })
         .select("userName avatar phoneNumber gender age")
         .lean()
         .skip(skip)
-        .limit(limit)
-    );
+        .limit(limit);
+
     users = fetchedUsers || [];
     total = await User.countDocuments();
   }
 
   const totalPages = Math.ceil(total / limit);
 
-  if (!users.length) {
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      message: "No users found",
-      data: {
-        users: [],
-        pagination: search ? undefined : { page, limit, total: 0, totalPages: 0 }
-      }
-    });
-  }
-  users = users.filter(user => user !== null);
+  // if (!users.length) {
+  //   return res.status(StatusCodes.OK).json({
+  //     success: true,
+  //     message: "No users found",
+  //     data: {
+  //       users: [],
+  //       pagination: search ? undefined : { page, limit, total: 0, totalPages: 0 }
+  //     }
+  //   });
+  // }
+  // users = users.filter(user => user !== null);
   res.status(StatusCodes.OK).json({
     success: true,
     message: "Successfully retrieved users information",
@@ -123,10 +123,10 @@ const update = async (req: Request, res: Response, next: NextFunction): Promise<
   let updates: Record<string, any> = {};
   if(req.body.data) updates = JSON.parse(req.body.data);
   updates.avatar = req.body.avatar;
-  if(updates.avatar && !user.avatar) {
+  if(updates.avatar && user.avatar) {
     await Cloudinary.remove(user.avatar);
   }
-  user = await User.findByIdAndUpdate(id, { $set: updates }, { new: true });
+  user = await User.findByIdAndUpdate(id, { $set: updates }, { new: true }).populate({path: "auth", select: "email"});
   return res.status(StatusCodes.OK).json({ success: true, message: "Success", data: user });
 };
 

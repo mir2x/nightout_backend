@@ -17,9 +17,11 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { data } = req.body;
-  const privacy = await to(Privacy.findOneAndUpdate({$set: data}, {new: true}));
+  const { text } = req.body;
+  const privacy = await Privacy.findOne();
   if (!privacy) return next(createError(StatusCodes.NOT_FOUND, "Privacy policy not found"));
+  privacy.text = text;
+  await privacy.save();
   return res.status(StatusCodes.OK).json({ success: true, message: "Success", data: privacy });
 };
 

@@ -1,8 +1,8 @@
 export enum Gender {
   NONE = "NONE",
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER"
+  MALE = "Male",
+  FEMALE = "Female",
+  OTHER = "Other"
 }
 
 export enum BarType {

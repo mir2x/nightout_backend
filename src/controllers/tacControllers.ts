@@ -17,9 +17,11 @@ const get = async (req: Request, res: Response, next: NextFunction): Promise<any
 };
 
 const update = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { data } = req.body;
-  const tac = await TaC.findOneAndUpdate({$set: data}, {new: true});
+  const { text } = req.body;
+  const tac = await TaC.findOne();
   if (!tac) throw createError(StatusCodes.NOT_FOUND, "Terms and Condition not found");
+  tac.text = text;
+  await tac.save();
   return res.status(StatusCodes.OK).json({ success: true, message: "Success", data: tac });
 };
 
