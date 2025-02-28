@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/register", asyncSessionHandler(AuthController.register));
 router.post("/activate", asyncHandler(AuthController.activate));
 router.post("/login", asyncHandler(AuthController.login));
+router.post("/sign-in-with-google", asyncHandler(AuthController.signInWithGoogle));
 router.post("/resend-otp", asyncHandler(AuthController.resendOTP));
 router.post("/recovery", asyncHandler(AuthController.recovery));
 router.post("/recovery-verification", asyncHandler(AuthController.recoveryVerification));

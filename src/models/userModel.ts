@@ -37,7 +37,7 @@ const userSchema = new Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
+      default: "",
     },
     age: {
       type: Number,

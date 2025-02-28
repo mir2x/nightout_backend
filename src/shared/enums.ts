@@ -26,8 +26,8 @@ export enum Day {
 }
 
 export enum BarScheduleStatus {
-  Open = "Open",
-  Close = "Close",
+  Open = "open",
+  Close = "close",
 }
 
 export enum AdminRole {

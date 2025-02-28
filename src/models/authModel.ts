@@ -6,6 +6,7 @@ import { generateToken } from "@utils/jwt";
 export type AuthSchema = Document & {
   email: string;
   password: string;
+  googleId: string;
   verificationOTP: string;
   verificationOTPExpiredAt: Date | null;
   recoveryOTP: string;
@@ -32,7 +33,9 @@ const authSchema: Schema<AuthSchema> = new Schema<AuthSchema>({
   },
   password: {
     type: String,
-    required: true,
+  },
+  googleId: {
+    type: String,
   },
   verificationOTP: {
     type: String,

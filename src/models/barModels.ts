@@ -3,10 +3,12 @@ import mongoose, { Schema } from "mongoose";
 
 export type BarSchema = {
   name: string;
+  placeId: string;
   barType: string;
   waitTime: number;
   crowdMeter: CrowdMeter;
-  reviews: number;
+  total_reviewer: number;
+  average_rating: number;
   cover: string;
   gallery: string[];
   about: {
@@ -36,38 +38,40 @@ export type BarSchema = {
 
 const barSchema = new Schema<BarSchema>({
   name: { type: String, required: true },
-  barType: { type: String, required: true },
-  waitTime: { type: Number, required: true },
-  crowdMeter: { type: String, enum: Object.values(CrowdMeter), required: true },
-  reviews: { type: Number, required: true },
-  cover: { type: String, required: true },
-  gallery: { type: [String], required: true },
+  placeId: { type: String },
+  barType: { type: String},
+  waitTime: { type: Number },
+  crowdMeter: { type: String, enum: Object.values(CrowdMeter)},
+  total_reviewer: { type: Number },
+  average_rating: { type: Number},
+  cover: { type: String },
+  gallery: { type: [String] },
   about: {
     address: {
-      placeName: { type: String, required: true },
-      latitude: { type: Number, required: true },
-      longitude: { type: Number, required: true }
+      placeName: { type: String },
+      latitude: { type: Number },
+      longitude: { type: Number }
     },
     schedule: [{
-      day: { type: String, enum: Object.values(Day), required: true },
+      day: { type: String, enum: Object.values(Day) },
       time: { type: String, required: true },
-      status: { type: String, enum: Object.values(BarScheduleStatus), required: true }
+      status: { type: String, enum: Object.values(BarScheduleStatus) }
     }],
-    dressCode: { type: [String], required: true },
-    music: { type: [String], required: true },
+    dressCode: { type: [String] },
+    music: { type: [String]},
     snacks: [
       {
-        name: { type: String, required: true },
-        cost: { type: Number, required: true }
+        name: { type: String },
+        cost: { type: Number }
       }
     ],
     drinks: [
       {
-        name: { type: String, required: true },
-        cost: { type: Number, required: true }
+        name: { type: String },
+        cost: { type: Number }
       }
     ],
-    website: { type: String, required: true }
+    website: { type: String }
   }
 }, { timestamps: true });
 

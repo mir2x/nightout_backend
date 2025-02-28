@@ -9,6 +9,8 @@ import TaCRouter from "@routers/tacRouter";
 import PrivacyRouter from "@routers/privacyRouter";
 import AdminRouter from "@routers/adminRouter";
 import BarRouter from "@routers/barRouter";
+import HomeRouter from "@routers/homeRouter";
+import FavoriteRouter from "@routers/favoriteRouter";
 
 
 const app = express();
@@ -28,7 +30,9 @@ const routes = [
   { path: "/user", router: UserRouter },
   { path: "/tac", router: TaCRouter },
   { path: "/privacy", router: PrivacyRouter },
-  { path: "/bar", router: BarRouter }
+  { path: "/bar", router: BarRouter },
+  { path: "/home", router: HomeRouter },
+  { path: "/favorite", router: FavoriteRouter }
 ];
 
 routes.forEach((route) => {

@@ -85,6 +85,24 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<a
   });
 };
 
+const signInWithGoogle = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const { googleId, name, email, avatar } = req.body;
+  let auth;
+  auth = await Auth.findOne({ googleId: googleId });
+  if (!auth) {
+   auth = await Auth.create({ googleId, email });
+   const user = await User.create({ auth: auth._id, userName: name, avatar });
+   console.log(user._id);
+  }
+  const accessToken = Auth.generateAccessToken(auth._id!.toString());
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: "Login successful",
+    data: { accessToken: accessToken},
+  });
+};
+
 const resendOTP = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, status } = req.body;
   let auth = await Auth.findOne({ email: email });
@@ -185,6 +203,7 @@ const AuthController = {
   register,
   activate,
   login,
+  signInWithGoogle,
   resendOTP,
   recovery,
   recoveryVerification,

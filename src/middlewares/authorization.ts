@@ -14,8 +14,10 @@ import { logger } from "@shared/logger";
 export const getUserInfo = async (authId: string): Promise<DecodedUser | null> => {
   let error, auth, user, data: DecodedUser;
   [error, auth] = await to(Auth.findById(authId).select("email role isVerified isBlocked"));
+  console.log(auth!._id);
   if (error || !auth) return null;
   [error, user] = await to(User.findOne({ auth: authId }));
+  console.log(user!.userName);
   if (error || !user) return null;
   data = {
     authId: auth._id!.toString(),
@@ -50,6 +52,7 @@ const authorizeToken = (secret: string, isAdminCheck: boolean = false) => {
       return next(createError(StatusCodes.INTERNAL_SERVER_ERROR, "JWT secret is not defined."));
     }
     const decoded = decodeToken(token, secret);
+    logger.info(decoded.id);
     let data;
     if (isAdminCheck) {
       data = await getAdminInfo(decoded.id);
@@ -57,6 +60,7 @@ const authorizeToken = (secret: string, isAdminCheck: boolean = false) => {
       logger.info(data);
       req.admin = data;
     } else {
+
       data = await getUserInfo(decoded.id);
       if (!data) return next(createError(StatusCodes.NOT_FOUND, "Account Not Found"));
       req.user = data;
